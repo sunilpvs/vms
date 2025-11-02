@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import RfqTable from "./RfqListTable";
 import { getPaginatedRfqs } from '../../services/vms/initiateVendor';
-import { toast } from 'react-hot-toast';
+
 
 const RfqList = () => {
   const [Rfqs, setRfqs] = useState([]);
