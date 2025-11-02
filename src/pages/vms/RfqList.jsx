@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import RfqTable from "./RfqListTable";
 import { getPaginatedRfqs } from '../../services/vms/initiateVendor';
+import { useNavigate } from 'react-router-dom';
 
 
 const RfqList = () => {
