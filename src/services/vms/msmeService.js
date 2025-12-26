@@ -8,6 +8,9 @@ export const addMsmeDetails = (id, payload) => {
     return axiosInstance.post(`api/vms/msme?reference_id=${id}`, payload);
 }
 
+export const updateMsmeDetails = (id, payload) => {
+    return axiosInstance.put(`api/vms/msme?reference_id=${id}`, payload);
+}
 
 
 

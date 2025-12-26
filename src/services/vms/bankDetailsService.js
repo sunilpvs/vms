@@ -11,3 +11,7 @@ export const addBankDetails = (reference_id, payload) => {
 export const addComplianceDetails = (reference_id, payload) => {
     return axiosInstance.post(`api/vms/bank?reference_id=${reference_id}&type=compliance`,payload );
 }
+
+export const updateBankDetails = (reference_id, payload) => {
+    return axiosInstance.put(`api/vms/bank-info?reference_id=${reference_id}`, payload);
+}
