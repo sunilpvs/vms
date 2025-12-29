@@ -31,6 +31,7 @@ import RfqList from "./pages/vms/RfqList";
 import VmsRequest from "./pages/vms/VmsRequest";
 import CreateRfq from "./pages/vms/CreateRfq";
 import RfqFormData from "./pages/vms/RfqFormData";
+import ReInitiatedPage from "./pages/vms/ReInitiateVendorPage";
 
 
 const App = () => {
@@ -81,6 +82,7 @@ const AppRoutes = () => (
             <Route path="/review-vendor/:reference_id" element={<VmsRequest />} />
             <Route path="review-vendor" element={<VmsRequest />} />
             <Route path="vendor-list" element={<VendorList />} />
+            <Route path="reinitiated-vendor" element={<ReInitiatedPage />} />
             
 
 
