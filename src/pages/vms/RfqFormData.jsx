@@ -2568,7 +2568,7 @@ const RfqFormData = () => {
             // Your additional rejection/send-back logic can go here
         } catch (error) {
             console.error("Error submitting comments:", error);
-            toast.error("Failed to submit comments.");
+            toast.error("Please provide comments before sending back.");
             return false;
         }
     };

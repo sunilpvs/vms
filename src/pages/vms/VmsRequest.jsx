@@ -48,14 +48,14 @@ const VmsRequest = () => {
     const [swiftCode, setSwiftCode] = useState("");
     const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
     const [isCountryPartyChecked, setIsCountryPartyChecked] = useState(false);
-    
+
     const [tanStatus, setTanStatus] = useState(""); // yes or no
     const [sameAsRegistered, setSameAsRegistered] = useState(false);
     const [countryCode, setCountryCode] = useState("");
     const [pendingRfqs, setPendingRfps] = useState([]);
     const [selectedReferenceId, setSelectedReferenceId] = useState("");
 
-    
+
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split("T")[0];
 
@@ -303,7 +303,7 @@ const VmsRequest = () => {
 
     const financialYears = generateFinancialYears();
     const [formData, setFormData] = useState({
-      fy1: "",
+        fy1: "",
         fy2: "",
         it1_id: null,
         it2_id: null,
@@ -830,7 +830,7 @@ const VmsRequest = () => {
         }
     };
 
-     // STEP 2: MSME details
+    // STEP 2: MSME details
     const [msmeInfo, setMsmeInfo] = useState({
         registered_under_msme: "",
         udyam_registration_number: "",
@@ -1864,7 +1864,7 @@ const VmsRequest = () => {
         return new Date(y, m, 0).getDate();
     };
 
-// STEP 4: Banking Information
+    // STEP 4: Banking Information
     const [bankInfo, setBankInfo] = useState({
         account_holder_name: "",
         bank_name: "",
@@ -2106,7 +2106,7 @@ const VmsRequest = () => {
     };
 
 
-   // Step 5: Documents
+    // Step 5: Documents
     const [documents, setDocuments] = useState({
 
         pan: {},
@@ -2115,7 +2115,7 @@ const VmsRequest = () => {
         cheque: {},
         tds: {},
         tds_declaration: "",
-        gst_available: "", 
+        gst_available: "",
         tanExemption: {},
     });
 
@@ -2160,17 +2160,17 @@ const VmsRequest = () => {
 
                     // Extract dropdown values from fetched documents
                     const updatedDocs = { ...docs };
-                    
+
                     // Check if TDS document exists to pre-select dropdown
                     if (docs?.tds) {
                         updatedDocs.tds_declaration = "true";
                     }
-                    
+
                     // Check if GST document exists to pre-select dropdown
                     if (docs?.gst) {
                         updatedDocs.gst_available = "true";
                     }
-                    
+
                     setDocuments(prev => ({
                         ...prev,
                         ...updatedDocs
@@ -2431,11 +2431,11 @@ const VmsRequest = () => {
                         fileName: declaration.file_name,
                     });
 
-                    if(declaration.primary_declarant_name && declaration.organisation_name && declaration.primary_declarant_designation){
+                    if (declaration.primary_declarant_name && declaration.organisation_name && declaration.primary_declarant_designation) {
                         setIsDeclarationChecked(true);
                     }
 
-                    if(declaration.country_declarant_name && declaration.country_name && declaration.country_declarant_designation){
+                    if (declaration.country_declarant_name && declaration.country_name && declaration.country_declarant_designation) {
                         setIsCountryPartyChecked(true);
                     }
                 }
@@ -2448,8 +2448,8 @@ const VmsRequest = () => {
     }, [selectedReferenceId]);
 
 
-    
-    
+
+
     // Comments state for each step to hold comments before submission
     const [comments, setComments] = useState({
         "Business Entity Details": "",
@@ -2541,7 +2541,7 @@ const VmsRequest = () => {
             // Your additional rejection/send-back logic can go here
         } catch (error) {
             console.error("Error submitting comments:", error);
-            toast.error("Failed to submit comments.");
+            toast.error("Please provide comments before sending back.");
             return false;
         }
     };
@@ -2552,14 +2552,19 @@ const VmsRequest = () => {
                 expiry_date: expiryDate,
             };
             const response = await approveRfq(selectedReferenceId, payload);
+            console.log("Approve RFQ response:", response.status);
             if (response.status === 200) {
-                return true;
-            } else {
-                return false;
+                return "approve success";
             }
         } catch (error) {
-            console.error("Error approving RFQ:", error);
-            return false;
+            if (error.response) {
+                if (error.response.status === 400) {
+                    return "verify before approve";
+                } else if (error.response.status === 409) {
+                    return "already approved";
+                }
+                return false;
+            }
         }
     };
 
@@ -2625,11 +2630,17 @@ const VmsRequest = () => {
                     return;
                 }
                 const response = await handleApproveRfq();
-                if (response === true) {
+                if (response === "approve success") {
                     toast.success(`Vendor approved successfully till ${expiryDate}`);
                     setSelectedReferenceId("");
+                } else if (response === "verify before approve") {
+                    toast.error("Please verify the vendor before approving.");
+                    setSelectedReferenceId("");
+                } else if (response === "already approved") {
+                    toast.error("Vendor has already been approved.");
+                    setSelectedReferenceId("");
                 } else {
-                    toast.error("Failed to approve vendor.");
+                    toast.error("Error while approving vendor.");
                     setSelectedReferenceId("");
                 }
             }
@@ -2779,7 +2790,7 @@ const VmsRequest = () => {
                                                 }}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -2835,7 +2846,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 disabled
-                                                  
+
                                             >
                                                 <option value="">-- Select Business Entity Type --</option>
                                                 <option value="Sole Proprietorship">Sole Proprietorship</option>
@@ -2869,7 +2880,7 @@ const VmsRequest = () => {
                                                     className={styles.fieldInput}
                                                     required
                                                     readOnly
-                                                    
+
                                                 />
                                             </div>
                                         )}
@@ -2889,7 +2900,7 @@ const VmsRequest = () => {
                                                     className={styles.fieldInput}
                                                     required
                                                     readOnly
-                                                    
+
                                                 />
                                             </div>
                                         )}
@@ -2909,7 +2920,7 @@ const VmsRequest = () => {
                                                     className={styles.fieldInput}
                                                     required
                                                     readOnly
-                                                    
+
                                                 />
                                             </div>
                                         )}
@@ -3055,7 +3066,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 disabled
-                                                  
+
                                             >
                                                 <option value="">-- Select --</option>
                                                 <option value="yes">Yes</option>
@@ -3079,7 +3090,7 @@ const VmsRequest = () => {
                                                     placeholder="Enter TAN Number"
                                                     required
                                                     readOnly
-                                                    
+
                                                 />
 
 
@@ -3106,7 +3117,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -3117,7 +3128,7 @@ const VmsRequest = () => {
                                             <select
                                                 name="country_type"
                                                 value={companyInfo.country_type}
-                                              
+
                                                 className={styles.fieldInput}
                                                 disabled
                                                 onChange={(e) => {
@@ -3254,7 +3265,7 @@ const VmsRequest = () => {
                                                     }
                                                     required
                                                     disabled
-                                                      
+
                                                     className={styles.fieldInput}
                                                 >
                                                     <option value="">-- Select State --</option>
@@ -3296,7 +3307,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -3327,7 +3338,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -3346,7 +3357,7 @@ const VmsRequest = () => {
                                                         }));
                                                     }}
                                                     disabled
-                                                      
+
                                                 />
                                                 Registered Address same as Business Address
                                             </label>
@@ -3366,7 +3377,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                              
+
                                             />
                                         </div>
 
@@ -3400,7 +3411,7 @@ const VmsRequest = () => {
                                                     }}
                                                     required
                                                     disabled
-                                                    
+
                                                 >
 
                                                     <option value="Mr.">Mr.</option>
@@ -3423,7 +3434,7 @@ const VmsRequest = () => {
                                                     }}
                                                     required
                                                     readOnly
-                                                    
+
                                                 />
                                             </div>
                                         </div>
@@ -3440,7 +3451,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -3456,7 +3467,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -3491,7 +3502,7 @@ const VmsRequest = () => {
                                                     }}
                                                     required
                                                     disabled
-                                                    
+
                                                 >
 
                                                     <option value="Mr.">Mr. </option>
@@ -3514,7 +3525,7 @@ const VmsRequest = () => {
                                                     }}
                                                     required
                                                     readOnly
-                                                    
+
                                                 />
                                             </div>
                                         </div>
@@ -3531,7 +3542,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -3547,7 +3558,7 @@ const VmsRequest = () => {
                                                 className={styles.fieldInput}
                                                 required
                                                 readOnly
-                                                
+
                                             />
                                         </div>
 
@@ -4256,7 +4267,7 @@ const VmsRequest = () => {
                                                                                         target: { name: `itrDay${i}`, value: e.target.value },
                                                                                     })
                                                                                 }
-                                                                                 required
+                                                                                required
                                                                                 disabled
                                                                                 style={{ width: "65px", textAlign: "center" }}
                                                                             >
@@ -4289,7 +4300,7 @@ const VmsRequest = () => {
                                 )}
 
 
-                                 {/* STEP 3: Banking & Further Information */}
+                                {/* STEP 3: Banking & Further Information */}
                                 {currentPage === 3 && (
                                     <div className={styles.page}>
                                         <h3>Banking Information</h3>
@@ -4511,9 +4522,9 @@ const VmsRequest = () => {
                                 )}
 
 
-                              {/* STEP 4: Documents to be enclosed */}
+                                {/* STEP 4: Documents to be enclosed */}
                                 {currentPage === 4 && (
-                                     <div className={styles.page}>
+                                    <div className={styles.page}>
                                         <h3>Documents to be enclosed</h3>
                                         <p
                                             className={styles.note}
@@ -4529,7 +4540,7 @@ const VmsRequest = () => {
                                         {/* PAN */}
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>PAN <span className={styles.requiredSymbol}>*</span></label>
-                                        
+
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.pan?.fileName && (
@@ -4645,7 +4656,7 @@ const VmsRequest = () => {
                                                 <label className={styles.fieldLabel}>
                                                     Upload MSME<span className={styles.requiredSymbol}>*</span>
                                                 </label>
-                                              
+
                                                 {documents.msme?.fileName && (
                                                     <span className={styles.fileName}>📄 {documents.msme.fileName}</span>
                                                 )}
@@ -4709,7 +4720,7 @@ const VmsRequest = () => {
                                                 <span className={styles.requiredSymbol}>*</span>
                                             </label>
 
-                                           
+
 
                                             {/* ============================ */}
                                             {/* TAN Certificate (Yes) */}
@@ -4767,7 +4778,7 @@ const VmsRequest = () => {
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>Registration Certificate <span className={styles.requiredSymbol}>*</span>
                                             </label>
-                                         
+
 
                                             {documents.incorporation?.fileName && (
                                                 <span className={styles.fileName}>📄 {documents.incorporation.fileName}</span>
@@ -4824,7 +4835,7 @@ const VmsRequest = () => {
                                                     Upload TDS Declaration <span className={styles.requiredSymbol}>*</span>
                                                 </label>
 
-                                             
+
 
                                                 {/* File Name */}
                                                 {documents.tds?.fileName && (
@@ -4852,13 +4863,13 @@ const VmsRequest = () => {
                                 )}
 
                                 {/* STEP 6: Declaration & Confidentiality */}
-                                 {currentPage === 5 && (
+                                {currentPage === 5 && (
                                     <div className={styles.page}>
                                         <h3>Declaration and Acknowledgement</h3>
 
-                                         <p
+                                        <p
                                             className={styles.declarationText}
-                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify", color:"#000", }}
+                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify", color: "#000", }}
                                         >
                                             I/We{" "}
                                             <input
@@ -4929,7 +4940,7 @@ const VmsRequest = () => {
 
                                         <p
                                             className={styles.declarationText}
-                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify",color:"#000", }}
+                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify", color: "#000", }}
                                         >
                                             I/We{" "}
                                             <input
@@ -5034,14 +5045,14 @@ const VmsRequest = () => {
                                                     />
                                                 </div>
 
-                                              <div className={styles.fieldRow}>
+                                                <div className={styles.fieldRow}>
                                                     <label className={styles.fieldLabel}>
                                                         Signature<br />
                                                         (JPG, JPEG, PNG — white background only, max 1 MB)
                                                         <span className={styles.requiredSymbol}>*</span>
                                                     </label>
 
-                                                   
+
 
                                                     {/* File name */}
                                                     {declarationInfo?.signedFile && (
@@ -5070,7 +5081,7 @@ const VmsRequest = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        
+
 
                                         {showModal && (
                                             <div className={styles.modalOverlay}>
