@@ -4443,6 +4443,7 @@ const VmsRequest = () => {
                                                     }
                                                     maxLength={11}
                                                     className={styles.fieldInput}
+                                                    readonly
                                                 />
                                             </div>
                                         )}
@@ -4461,6 +4462,7 @@ const VmsRequest = () => {
                                                     }
                                                     maxLength={11}
                                                     className={styles.fieldInput}
+                                                    readonly
                                                 />
                                             </div>
                                         )}
