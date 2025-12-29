@@ -53,6 +53,8 @@ const RfqFormData = () => {
 
     const [pendingRfqs, setPendingRfps] = useState([]);
     const [selectedReferenceId, setSelectedReferenceId] = useState("");
+    const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
+    const [isCountryPartyChecked, setIsCountryPartyChecked] = useState(false);
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split("T")[0];
 
@@ -300,7 +302,7 @@ const RfqFormData = () => {
 
     const financialYears = generateFinancialYears();
     const [formData, setFormData] = useState({
-      fy1: "",
+        fy1: "",
         fy2: "",
         it1_id: null,
         it2_id: null,
@@ -4513,7 +4515,14 @@ const RfqFormData = () => {
                                         {/* PAN */}
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>PAN <span className={styles.requiredSymbol}>*</span></label>
-
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                className={styles.fieldInput}
+                                                onChange={(e) => handleDocumentChange("pan", e.target.files[0])}
+                                                required
+                                                readOnly
+                                            />
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.pan?.fileName && (
@@ -4574,6 +4583,13 @@ const RfqFormData = () => {
                                                     GSTIN Certificate <span className={styles.requiredSymbol}>*</span>
                                                 </label>
 
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    className={styles.fieldInput}
+                                                    onChange={(e) => handleDocumentChange("gst", e.target.files[0])}
+                                                    readOnly
+                                                />
 
                                                 {/* File name */}
                                                 {documents.gst?.fileName && (
@@ -4614,7 +4630,7 @@ const RfqFormData = () => {
                                                 }
                                                 className={styles.fieldInput}
                                                 required
-                                                disabled={true}
+                                                disabled
                                             >
                                                 <option value="">Select</option>
                                                 <option value="true">Yes</option>
@@ -4629,7 +4645,13 @@ const RfqFormData = () => {
                                                 <label className={styles.fieldLabel}>
                                                     Upload MSME<span className={styles.requiredSymbol}>*</span>
                                                 </label>
-
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    className={styles.fieldInput}
+                                                    onChange={(e) => handleDocumentChange("msme", e.target.files[0])}
+                                                    readOnly
+                                                />
                                                 {documents.msme?.fileName && (
                                                     <span className={styles.fileName}>📄 {documents.msme.fileName}</span>
                                                 )}
@@ -4658,7 +4680,13 @@ const RfqFormData = () => {
                                                 Cancelled Cheque Leaf
                                             </label>
 
-
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                onChange={(e) => handleDocumentChange("cheque", e.target.files[0])}
+                                                className={styles.fieldInput}
+                                                disabled
+                                            />
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.cheque?.fileName && (
@@ -4695,58 +4723,67 @@ const RfqFormData = () => {
                                             </label>
 
                                             {/* File Upload */}
-
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                className={styles.fieldInput}
+                                                onChange={(e) =>
+                                                    handleDocumentChange(
+                                                        tanStatus === "yes" ? "tanCertificate" : "tanExemption",
+                                                        e.target.files[0]
+                                                    )
+                                                }
+                                                required
+                                                readOnly
+                                            />
 
                                             {/* ============================ */}
                                             {/* TAN Certificate (Yes) */}
                                             {/* ============================ */}
                                             {tanStatus === "yes" && documents.tanCertificate?.fileName && (
-                                                <>
-                                                    <span className={styles.fileName}>
-                                                        📄 {documents.tanCertificate.fileName}
-                                                    </span>
+                                                <span className={styles.fileName}>
+                                                    📄 {documents.tanCertificate.fileName}
+                                                </span>
+                                            )}
 
-                                                    {documents.tanCertificate?.url && (
-                                                        <a
-                                                            href={
-                                                                documents.tanCertificate.url.startsWith("blob:")
-                                                                    ? documents.tanCertificate.url
-                                                                    : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanCertificate.url}`
-                                                            }
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={styles.viewButton}
-                                                        >
-                                                            View
-                                                        </a>
-                                                    )}
-                                                </>
+                                            {/* View Button */}
+                                            {tanStatus === "yes" && documents.tanCertificate?.url && (
+                                                <a
+                                                    href={
+                                                        documents.tanCertificate.url.startsWith("blob:")
+                                                            ? documents.tanCertificate.url
+                                                            : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanCertificate.url}`
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={styles.viewButton}
+                                                >
+                                                    View
+                                                </a>
                                             )}
 
                                             {/* ============================ */}
                                             {/* TAN Exemption (No) */}
                                             {/* ============================ */}
                                             {tanStatus === "no" && documents.tanExemption?.fileName && (
-                                                <>
-                                                    <span className={styles.fileName}>
-                                                        📄 {documents.tanExemption.fileName}
-                                                    </span>
+                                                <span className={styles.fileName}>
+                                                    📄 {documents.tanExemption.fileName}
+                                                </span>
+                                            )}
 
-                                                    {documents.tanExemption?.url && (
-                                                        <a
-                                                            href={
-                                                                documents.tanExemption.url.startsWith("blob:")
-                                                                    ? documents.tanExemption.url
-                                                                    : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanExemption.url}`
-                                                            }
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={styles.viewButton}
-                                                        >
-                                                            View
-                                                        </a>
-                                                    )}
-                                                </>
+                                            {tanStatus === "no" && documents.tanExemption?.url && (
+                                                <a
+                                                    href={
+                                                        documents.tanExemption.url.startsWith("blob:")
+                                                            ? documents.tanExemption.url
+                                                            : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanExemption.url}`
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={styles.viewButton}
+                                                >
+                                                    View
+                                                </a>
                                             )}
                                         </div>
 
@@ -4756,7 +4793,14 @@ const RfqFormData = () => {
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>Registration Certificate <span className={styles.requiredSymbol}>*</span>
                                             </label>
-
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                className={styles.fieldInput}
+                                                onChange={(e) => handleDocumentChange("incorporation", e.target.files[0])}
+                                                required
+                                                readOnly
+                                            />
 
                                             {documents.incorporation?.fileName && (
                                                 <span className={styles.fileName}>📄 {documents.incorporation.fileName}</span>
@@ -4813,6 +4857,13 @@ const RfqFormData = () => {
                                                     Upload TDS Declaration <span className={styles.requiredSymbol}>*</span>
                                                 </label>
 
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    className={styles.fieldInput}
+                                                    onChange={(e) => handleDocumentChange("tds", e.target.files[0])}
+                                                    readOnly
+                                                />
 
                                                 {/* File Name */}
                                                 {documents.tds?.fileName && (
@@ -4895,6 +4946,25 @@ const RfqFormData = () => {
                                             necessary to verify the answers.
                                         </p>
 
+                                        <div className={styles.checkboxRow}>
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isDeclarationChecked}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setIsDeclarationChecked(checked);
+
+
+                                                    }}
+                                                    disabled
+                                                    style={{ marginRight: "8px" }}
+                                                />
+                                                I agree Declaration
+                                            </label>
+                                        </div>
+
+
 
                                         <p
                                             className={styles.declarationText}
@@ -4946,81 +5016,104 @@ const RfqFormData = () => {
                                             and complies with the regulations of our respective country.
                                         </p>
 
+                                        {/* Country Party Declaration Section */}
+                                        <div className={styles.checkboxRow}>
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isCountryPartyChecked}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setIsCountryPartyChecked(checked);
 
+
+                                                    }}
+                                                    disabled
+                                                    style={{ marginRight: "8px" }}
+                                                />
+                                                I agree with Country Party Declaration
+                                            </label>
+                                        </div>
 
                                         {/* Show these 3 fields only when BOTH checkboxes are ticked */}
-
-                                        <div className={styles.declarationBox}>
-                                            <div className={styles.fieldRow}>
-                                                <label className={styles.fieldLabel}>Place <span className={styles.requiredSymbol}>*</span></label>
-                                                <input
-                                                    type="text"
-                                                    value={declarationInfo.place}
-                                                    onChange={(e) =>
-                                                        setDeclarationInfo((prev) => ({
-                                                            ...prev,
-                                                            place: e.target.value
-                                                                .replace(/[^A-Za-z\s]/g, "")
-                                                                .replace(/\s+/g, " ")
-                                                                .toUpperCase()
-                                                                .trim(),
-                                                        }))
-                                                    }
-                                                    className={styles.fieldInput}
-                                                    readOnly
-                                                />
-                                            </div>
-
-                                            {/* Date (auto-filled with today's date, not editable) */}
-                                            <div className={styles.fieldRow}>
-                                                <label className={styles.fieldLabel}>Date</label>
-                                                <input
-                                                    type="date"
-                                                    value={
-                                                        declarationInfo.signed_date ||
-                                                        new Date().toISOString().slice(0, 10) // today's date in yyyy-mm-dd
-                                                    }
-                                                    onChange={() => { }} // prevent typing
-                                                    className={styles.fieldInput}
-                                                    readOnly // makes it non-editable
-                                                />
-                                            </div>
-
-                                            <div className={styles.fieldRow}>
-                                                <label className={styles.fieldLabel}>
-                                                    Signature<br />
-                                                    (JPG, JPEG, PNG — white background only, max 1 MB)
-                                                    <span className={styles.requiredSymbol}>*</span>
-                                                </label>
-
-
-
-                                                {/* File name */}
-                                                {declarationInfo?.signedFile && (
-                                                    <span className={styles.fileName}>
-                                                        📄{" "}
-                                                        {declarationInfo?.signedFile?.file
-                                                            ? declarationInfo.signedFile.file.name
-                                                            : declarationInfo.file_name}
-                                                    </span>
-                                                )}
-
-                                                {declarationInfo?.signedFile && (
-                                                    <a
-                                                        href={declarationInfo.signedFile.url
-                                                            ? declarationInfo.signedFile.url
-                                                            : `${process.env.REACT_APP_API_BASE_URL}/${declarationInfo.signedFile}`
+                                        {isDeclarationChecked && isCountryPartyChecked && (
+                                            <div className={styles.declarationBox}>
+                                                <div className={styles.fieldRow}>
+                                                    <label className={styles.fieldLabel}>Place <span className={styles.requiredSymbol}>*</span></label>
+                                                    <input
+                                                        type="text"
+                                                        value={declarationInfo.place}
+                                                        onChange={(e) =>
+                                                            setDeclarationInfo((prev) => ({
+                                                                ...prev,
+                                                                place: e.target.value
+                                                                    .replace(/[^A-Za-z\s]/g, "")
+                                                                    .replace(/\s+/g, " ")
+                                                                    .toUpperCase()
+                                                                    .trim(),
+                                                            }))
                                                         }
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className={styles.viewButton}
-                                                    >
-                                                        View
-                                                    </a>
-                                                )}
+                                                        className={styles.fieldInput}
+                                                        readOnly
+                                                    />
+                                                </div>
 
+                                                {/* Date (auto-filled with today's date, not editable) */}
+                                                <div className={styles.fieldRow}>
+                                                    <label className={styles.fieldLabel}>Date</label>
+                                                    <input
+                                                        type="date"
+                                                        value={
+                                                            declarationInfo.signed_date ||
+                                                            new Date().toISOString().slice(0, 10) // today's date in yyyy-mm-dd
+                                                        }
+                                                        onChange={() => { }} // prevent typing
+                                                        className={styles.fieldInput}
+                                                        readOnly // makes it non-editable
+                                                    />
+                                                </div>
+
+                                                <div className={styles.fieldRow}>
+                                                    <label className={styles.fieldLabel}>
+                                                        Signature<br />
+                                                        (JPG, JPEG, PNG — white background only, max 1 MB)
+                                                        <span className={styles.requiredSymbol}>*</span>
+                                                    </label>
+
+                                                    <input
+                                                        type="file"
+                                                        accept=".jpg,.jpeg,.png"
+                                                        name="signedFile"
+                                                        onChange={handleDeclarationChange}
+                                                    />
+
+                                                    {/* File name */}
+                                                    {declarationInfo?.signedFile && (
+                                                        <span className={styles.fileName}>
+                                                            📄{" "}
+                                                            {declarationInfo?.signedFile?.file
+                                                                ? declarationInfo.signedFile.file.name
+                                                                : declarationInfo.file_name}
+                                                        </span>
+                                                    )}
+
+                                                    {declarationInfo?.signedFile && (
+                                                        <a
+                                                            href={declarationInfo.signedFile.url
+                                                                ? declarationInfo.signedFile.url
+                                                                : `${process.env.REACT_APP_API_BASE_URL}/${declarationInfo.signedFile}`
+                                                            }
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className={styles.viewButton}
+                                                        >
+                                                            View
+                                                        </a>
+                                                    )}
+
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
 
 

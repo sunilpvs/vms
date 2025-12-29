@@ -47,13 +47,14 @@ const VmsRequest = () => {
     const [ifscCode, setIfscCode] = useState("");
     const [swiftCode, setSwiftCode] = useState("");
     const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
-        const [isCountryPartyChecked, setIsCountryPartyChecked] = useState(false);
+    const [isCountryPartyChecked, setIsCountryPartyChecked] = useState(false);
     
     const [tanStatus, setTanStatus] = useState(""); // yes or no
     const [sameAsRegistered, setSameAsRegistered] = useState(false);
     const [countryCode, setCountryCode] = useState("");
     const [pendingRfqs, setPendingRfps] = useState([]);
     const [selectedReferenceId, setSelectedReferenceId] = useState("");
+
     
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split("T")[0];
@@ -2105,7 +2106,7 @@ const VmsRequest = () => {
     };
 
 
-    // Step 5: Documents
+   // Step 5: Documents
     const [documents, setDocuments] = useState({
 
         pan: {},
@@ -2114,7 +2115,8 @@ const VmsRequest = () => {
         cheque: {},
         tds: {},
         tds_declaration: "",
-        gst_available: "", // ✅ add this
+        gst_available: "", 
+        tanExemption: {},
     });
 
     const [documentStatus, setDocumentStatus] = useState({
@@ -2145,6 +2147,7 @@ const VmsRequest = () => {
         const fetchDocuments = async () => {
             try {
                 const response = await getDocumentDetails(selectedReferenceId);
+                console.log("Fetched Documents:", response?.data);
                 if (response?.data) {
                     const docs = {};
                     response.data.forEach(doc => {
@@ -2154,9 +2157,23 @@ const VmsRequest = () => {
                             url: doc?.file_path  // stored file path
                         };
                     });
+
+                    // Extract dropdown values from fetched documents
+                    const updatedDocs = { ...docs };
+                    
+                    // Check if TDS document exists to pre-select dropdown
+                    if (docs?.tds) {
+                        updatedDocs.tds_declaration = "true";
+                    }
+                    
+                    // Check if GST document exists to pre-select dropdown
+                    if (docs?.gst) {
+                        updatedDocs.gst_available = "true";
+                    }
+                    
                     setDocuments(prev => ({
                         ...prev,
-                        ...docs
+                        ...updatedDocs
                     }));
                 }
             } catch (err) {
@@ -2413,6 +2430,14 @@ const VmsRequest = () => {
                         signedFile: declaration.authorized_signatory || null,
                         fileName: declaration.file_name,
                     });
+
+                    if(declaration.primary_declarant_name && declaration.organisation_name && declaration.primary_declarant_designation){
+                        setIsDeclarationChecked(true);
+                    }
+
+                    if(declaration.country_declarant_name && declaration.country_name && declaration.country_declarant_designation){
+                        setIsCountryPartyChecked(true);
+                    }
                 }
             } catch (err) {
                 console.error("Failed to fetch documents", err);
@@ -4488,7 +4513,7 @@ const VmsRequest = () => {
 
                               {/* STEP 4: Documents to be enclosed */}
                                 {currentPage === 4 && (
-                                    <div className={styles.page}>
+                                     <div className={styles.page}>
                                         <h3>Documents to be enclosed</h3>
                                         <p
                                             className={styles.note}
@@ -4504,7 +4529,14 @@ const VmsRequest = () => {
                                         {/* PAN */}
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>PAN <span className={styles.requiredSymbol}>*</span></label>
-                                          
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                className={styles.fieldInput}
+                                                onChange={(e) => handleDocumentChange("pan", e.target.files[0])}
+                                                required
+                                                readOnly
+                                            />
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.pan?.fileName && (
@@ -4565,6 +4597,13 @@ const VmsRequest = () => {
                                                     GSTIN Certificate <span className={styles.requiredSymbol}>*</span>
                                                 </label>
 
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    className={styles.fieldInput}
+                                                    onChange={(e) => handleDocumentChange("gst", e.target.files[0])}
+                                                    readOnly
+                                                />
 
                                                 {/* File name */}
                                                 {documents.gst?.fileName && (
@@ -4605,7 +4644,7 @@ const VmsRequest = () => {
                                                 }
                                                 className={styles.fieldInput}
                                                 required
-                                                disabled={true}
+                                                disabled
                                             >
                                                 <option value="">Select</option>
                                                 <option value="true">Yes</option>
@@ -4620,7 +4659,13 @@ const VmsRequest = () => {
                                                 <label className={styles.fieldLabel}>
                                                     Upload MSME<span className={styles.requiredSymbol}>*</span>
                                                 </label>
-                                               
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    className={styles.fieldInput}
+                                                    onChange={(e) => handleDocumentChange("msme", e.target.files[0])}
+                                                    readOnly
+                                                />
                                                 {documents.msme?.fileName && (
                                                     <span className={styles.fileName}>📄 {documents.msme.fileName}</span>
                                                 )}
@@ -4649,7 +4694,13 @@ const VmsRequest = () => {
                                                 Cancelled Cheque Leaf
                                             </label>
 
-                                          
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                onChange={(e) => handleDocumentChange("cheque", e.target.files[0])}
+                                                className={styles.fieldInput}
+                                                disabled
+                                            />
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.cheque?.fileName && (
@@ -4686,58 +4737,67 @@ const VmsRequest = () => {
                                             </label>
 
                                             {/* File Upload */}
-                                          
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                className={styles.fieldInput}
+                                                onChange={(e) =>
+                                                    handleDocumentChange(
+                                                        tanStatus === "yes" ? "tanCertificate" : "tanExemption",
+                                                        e.target.files[0]
+                                                    )
+                                                }
+                                                required
+                                                readOnly
+                                            />
 
                                             {/* ============================ */}
                                             {/* TAN Certificate (Yes) */}
                                             {/* ============================ */}
                                             {tanStatus === "yes" && documents.tanCertificate?.fileName && (
-                                                <>
-                                                    <span className={styles.fileName}>
-                                                        📄 {documents.tanCertificate.fileName}
-                                                    </span>
+                                                <span className={styles.fileName}>
+                                                    📄 {documents.tanCertificate.fileName}
+                                                </span>
+                                            )}
 
-                                                    {documents.tanCertificate?.url && (
-                                                        <a
-                                                            href={
-                                                                documents.tanCertificate.url.startsWith("blob:")
-                                                                    ? documents.tanCertificate.url
-                                                                    : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanCertificate.url}`
-                                                            }
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={styles.viewButton}
-                                                        >
-                                                            View
-                                                        </a>
-                                                    )}
-                                                </>
+                                            {/* View Button */}
+                                            {tanStatus === "yes" && documents.tanCertificate?.url && (
+                                                <a
+                                                    href={
+                                                        documents.tanCertificate.url.startsWith("blob:")
+                                                            ? documents.tanCertificate.url
+                                                            : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanCertificate.url}`
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={styles.viewButton}
+                                                >
+                                                    View
+                                                </a>
                                             )}
 
                                             {/* ============================ */}
                                             {/* TAN Exemption (No) */}
                                             {/* ============================ */}
                                             {tanStatus === "no" && documents.tanExemption?.fileName && (
-                                                <>
-                                                    <span className={styles.fileName}>
-                                                        📄 {documents.tanExemption.fileName}
-                                                    </span>
+                                                <span className={styles.fileName}>
+                                                    📄 {documents.tanExemption.fileName}
+                                                </span>
+                                            )}
 
-                                                    {documents.tanExemption?.url && (
-                                                        <a
-                                                            href={
-                                                                documents.tanExemption.url.startsWith("blob:")
-                                                                    ? documents.tanExemption.url
-                                                                    : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanExemption.url}`
-                                                            }
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={styles.viewButton}
-                                                        >
-                                                            View
-                                                        </a>
-                                                    )}
-                                                </>
+                                            {tanStatus === "no" && documents.tanExemption?.url && (
+                                                <a
+                                                    href={
+                                                        documents.tanExemption.url.startsWith("blob:")
+                                                            ? documents.tanExemption.url
+                                                            : `${process.env.REACT_APP_API_BASE_URL}/${documents.tanExemption.url}`
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={styles.viewButton}
+                                                >
+                                                    View
+                                                </a>
                                             )}
                                         </div>
 
@@ -4747,7 +4807,14 @@ const VmsRequest = () => {
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>Registration Certificate <span className={styles.requiredSymbol}>*</span>
                                             </label>
-                                           
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                className={styles.fieldInput}
+                                                onChange={(e) => handleDocumentChange("incorporation", e.target.files[0])}
+                                                required
+                                                readOnly
+                                            />
 
                                             {documents.incorporation?.fileName && (
                                                 <span className={styles.fileName}>📄 {documents.incorporation.fileName}</span>
@@ -4804,6 +4871,13 @@ const VmsRequest = () => {
                                                     Upload TDS Declaration <span className={styles.requiredSymbol}>*</span>
                                                 </label>
 
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    className={styles.fieldInput}
+                                                    onChange={(e) => handleDocumentChange("tds", e.target.files[0])}
+                                                    readOnly
+                                                />
 
                                                 {/* File Name */}
                                                 {documents.tds?.fileName && (
@@ -4835,9 +4909,9 @@ const VmsRequest = () => {
                                     <div className={styles.page}>
                                         <h3>Declaration and Acknowledgement</h3>
 
-                                        <p
+                                         <p
                                             className={styles.declarationText}
-                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify", color: "#000", }}
+                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify", color:"#000", }}
                                         >
                                             I/We{" "}
                                             <input
@@ -4886,10 +4960,29 @@ const VmsRequest = () => {
                                             necessary to verify the answers.
                                         </p>
 
-                                
+                                        <div className={styles.checkboxRow}>
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isDeclarationChecked}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setIsDeclarationChecked(checked);
+
+
+                                                    }}
+                                                    disabled
+                                                    style={{ marginRight: "8px" }}
+                                                />
+                                                I agree Declaration
+                                            </label>
+                                        </div>
+
+
+
                                         <p
                                             className={styles.declarationText}
-                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify",color: "#000", }}
+                                            style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify",color:"#000", }}
                                         >
                                             I/We{" "}
                                             <input
@@ -4937,10 +5030,27 @@ const VmsRequest = () => {
                                             and complies with the regulations of our respective country.
                                         </p>
 
-                                   
+                                        {/* Country Party Declaration Section */}
+                                        <div className={styles.checkboxRow}>
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isCountryPartyChecked}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setIsCountryPartyChecked(checked);
+
+
+                                                    }}
+                                                    disabled
+                                                    style={{ marginRight: "8px" }}
+                                                />
+                                                I agree with Country Party Declaration
+                                            </label>
+                                        </div>
 
                                         {/* Show these 3 fields only when BOTH checkboxes are ticked */}
-                                 
+                                        {isDeclarationChecked && isCountryPartyChecked && (
                                             <div className={styles.declarationBox}>
                                                 <div className={styles.fieldRow}>
                                                     <label className={styles.fieldLabel}>Place <span className={styles.requiredSymbol}>*</span></label>
@@ -4977,14 +5087,19 @@ const VmsRequest = () => {
                                                     />
                                                 </div>
 
-                                                <div className={styles.fieldRow}>
+                                              <div className={styles.fieldRow}>
                                                     <label className={styles.fieldLabel}>
                                                         Signature<br />
                                                         (JPG, JPEG, PNG — white background only, max 1 MB)
                                                         <span className={styles.requiredSymbol}>*</span>
                                                     </label>
 
-                                                   
+                                                    <input
+                                                        type="file"
+                                                        accept=".jpg,.jpeg,.png"
+                                                        name="signedFile"
+                                                        onChange={handleDeclarationChange}
+                                                    />
 
                                                     {/* File name */}
                                                     {declarationInfo?.signedFile && (
@@ -5012,6 +5127,7 @@ const VmsRequest = () => {
 
                                                 </div>
                                             </div>
+                                        )}
                                         
 
                                         {showModal && (
