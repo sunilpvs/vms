@@ -4529,14 +4529,7 @@ const VmsRequest = () => {
                                         {/* PAN */}
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>PAN <span className={styles.requiredSymbol}>*</span></label>
-                                            <input
-                                                type="file"
-                                                accept=".jpg,.jpeg,.png,.pdf"
-                                                className={styles.fieldInput}
-                                                onChange={(e) => handleDocumentChange("pan", e.target.files[0])}
-                                                required
-                                                readOnly
-                                            />
+                                        
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.pan?.fileName && (
@@ -4597,13 +4590,6 @@ const VmsRequest = () => {
                                                     GSTIN Certificate <span className={styles.requiredSymbol}>*</span>
                                                 </label>
 
-                                                <input
-                                                    type="file"
-                                                    accept=".jpg,.jpeg,.png,.pdf"
-                                                    className={styles.fieldInput}
-                                                    onChange={(e) => handleDocumentChange("gst", e.target.files[0])}
-                                                    readOnly
-                                                />
 
                                                 {/* File name */}
                                                 {documents.gst?.fileName && (
@@ -4659,13 +4645,7 @@ const VmsRequest = () => {
                                                 <label className={styles.fieldLabel}>
                                                     Upload MSME<span className={styles.requiredSymbol}>*</span>
                                                 </label>
-                                                <input
-                                                    type="file"
-                                                    accept=".jpg,.jpeg,.png,.pdf"
-                                                    className={styles.fieldInput}
-                                                    onChange={(e) => handleDocumentChange("msme", e.target.files[0])}
-                                                    readOnly
-                                                />
+                                              
                                                 {documents.msme?.fileName && (
                                                     <span className={styles.fileName}>📄 {documents.msme.fileName}</span>
                                                 )}
@@ -4694,13 +4674,6 @@ const VmsRequest = () => {
                                                 Cancelled Cheque Leaf
                                             </label>
 
-                                            <input
-                                                type="file"
-                                                accept=".pdf,.jpg,.jpeg,.png"
-                                                onChange={(e) => handleDocumentChange("cheque", e.target.files[0])}
-                                                className={styles.fieldInput}
-                                                disabled
-                                            />
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.cheque?.fileName && (
@@ -4736,20 +4709,7 @@ const VmsRequest = () => {
                                                 <span className={styles.requiredSymbol}>*</span>
                                             </label>
 
-                                            {/* File Upload */}
-                                            <input
-                                                type="file"
-                                                accept=".jpg,.jpeg,.png,.pdf"
-                                                className={styles.fieldInput}
-                                                onChange={(e) =>
-                                                    handleDocumentChange(
-                                                        tanStatus === "yes" ? "tanCertificate" : "tanExemption",
-                                                        e.target.files[0]
-                                                    )
-                                                }
-                                                required
-                                                readOnly
-                                            />
+                                           
 
                                             {/* ============================ */}
                                             {/* TAN Certificate (Yes) */}
@@ -4807,14 +4767,7 @@ const VmsRequest = () => {
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>Registration Certificate <span className={styles.requiredSymbol}>*</span>
                                             </label>
-                                            <input
-                                                type="file"
-                                                accept=".jpg,.jpeg,.png,.pdf"
-                                                className={styles.fieldInput}
-                                                onChange={(e) => handleDocumentChange("incorporation", e.target.files[0])}
-                                                required
-                                                readOnly
-                                            />
+                                         
 
                                             {documents.incorporation?.fileName && (
                                                 <span className={styles.fileName}>📄 {documents.incorporation.fileName}</span>
@@ -4871,13 +4824,7 @@ const VmsRequest = () => {
                                                     Upload TDS Declaration <span className={styles.requiredSymbol}>*</span>
                                                 </label>
 
-                                                <input
-                                                    type="file"
-                                                    accept=".jpg,.jpeg,.png,.pdf"
-                                                    className={styles.fieldInput}
-                                                    onChange={(e) => handleDocumentChange("tds", e.target.files[0])}
-                                                    readOnly
-                                                />
+                                             
 
                                                 {/* File Name */}
                                                 {documents.tds?.fileName && (
@@ -5094,12 +5041,7 @@ const VmsRequest = () => {
                                                         <span className={styles.requiredSymbol}>*</span>
                                                     </label>
 
-                                                    <input
-                                                        type="file"
-                                                        accept=".jpg,.jpeg,.png"
-                                                        name="signedFile"
-                                                        onChange={handleDeclarationChange}
-                                                    />
+                                                   
 
                                                     {/* File name */}
                                                     {declarationInfo?.signedFile && (
