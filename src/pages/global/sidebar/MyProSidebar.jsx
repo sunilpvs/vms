@@ -20,6 +20,7 @@ import SwitchLeftOutlinedIcon from "@mui/icons-material/SwitchLeftOutlined";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
+import ReplayIcon from "@mui/icons-material/Replay";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
     const theme = useTheme();
@@ -231,6 +232,14 @@ const MyProSidebar = () => {
                             setSelected={setSelected}
                         />
 
+                           <Item
+                            title="Reinitiate Vendor"
+                            to="/reinitiated-vendor"
+                            icon={<ReplayIcon />}
+                            selected={selected}
+                            setSelected={setSelected}
+                        />
+
                         <Item
                             title="Reports"
                             to="#"
@@ -238,6 +247,8 @@ const MyProSidebar = () => {
                             selected={selected}
                             setSelected={setSelected}
                         />
+
+                      
 
                       
 
