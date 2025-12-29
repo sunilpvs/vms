@@ -19,6 +19,8 @@ const fetchRfqs = async (pageNum = page, limitPerPage = limit) => {
     setTotal(res.data.total || 0);
     setPage(res.data.page || pageNum);
     setLimit(res.data.limit || limitPerPage);
+    // console.log('Rfqs:', Rfqs, Array.isArray(Rfqs));
+
   } catch (err) {
     console.error('Failed to fetch RFQs', err);
   }

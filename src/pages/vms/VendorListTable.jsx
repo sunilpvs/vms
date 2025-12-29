@@ -99,10 +99,9 @@ function VendorListTable({
   <tr>
     <th>RFQ ID</th>
     <th>Vendor Code</th>
-     <th>Entity</th>
+    <th>Entity</th>
     <th>Contact Name</th>
-    <th>Vendor Email</th>
-    <th>Vendor Mobile</th>
+    <th>Contact Person Mobile</th>
     <th>Expiry Date</th>
     <th>Status</th>
     <th>Actions</th>
@@ -122,7 +121,6 @@ function VendorListTable({
         <td>{data.vendor_code || 'N/A'}</td>
         <td>{data.entity_name}</td>
         <td>{data.contact_person_name}</td>
-        <td>{data.company_email || 'N/A'}</td>
         <td>{data.contact_person_mobile || 'N/A'}</td>
         <td>{data.expiry_date || 'N/A'}</td>
         <td>{data.status}</td>
