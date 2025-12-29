@@ -3938,7 +3938,7 @@ const VmsRequest = () => {
                                                         }
                                                         className={styles.fieldInput}
                                                         required
-                                                        readOnly
+                                                        disabled
                                                     >
                                                         <option value="">Select</option>
                                                         <option value="Regular">Regular</option>
@@ -4231,6 +4231,8 @@ const VmsRequest = () => {
                                                                                         target: { name: `itrDay${i}`, value: e.target.value },
                                                                                     })
                                                                                 }
+                                                                                 required
+                                                                                disabled
                                                                                 style={{ width: "65px", textAlign: "center" }}
                                                                             >
                                                                                 <option value="">DD</option>
@@ -4332,6 +4334,7 @@ const VmsRequest = () => {
                                                 }}
                                                 className={styles.fieldInput}
                                                 required
+                                                disabled
                                             >
                                                 <option value="">Select Transaction Type</option>
                                                 <option value="Domestic">Domestic</option>
@@ -4376,6 +4379,7 @@ const VmsRequest = () => {
                                                     }
                                                 }}
                                                 className={styles.fieldInput}
+                                                disabled
                                             >
                                                 <option value="">-- Select Country --</option>
                                                 <option value="India">India</option>
@@ -4400,6 +4404,7 @@ const VmsRequest = () => {
                                                         }
                                                         required
                                                         className={styles.fieldInput}
+                                                        readonly
                                                     />
                                                 </div>
 
@@ -4879,26 +4884,7 @@ const VmsRequest = () => {
                                             necessary to verify the answers.
                                         </p>
 
-                                        <div className={styles.checkboxRow}>
-                                            <label>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isDeclarationChecked}
-                                                    onChange={(e) => {
-                                                        const checked = e.target.checked;
-                                                        setIsDeclarationChecked(checked);
-
-
-                                                    }}
-                                                    disabled
-                                                    style={{ marginRight: "8px" }}
-                                                />
-                                                I agree Declaration
-                                            </label>
-                                        </div>
-
-
-
+                                
                                         <p
                                             className={styles.declarationText}
                                             style={{ margin: "10px 0", lineHeight: "1.6", textAlign: "justify",color: "#000", }}
@@ -4949,27 +4935,10 @@ const VmsRequest = () => {
                                             and complies with the regulations of our respective country.
                                         </p>
 
-                                        {/* Country Party Declaration Section */}
-                                        <div className={styles.checkboxRow}>
-                                            <label>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isCountryPartyChecked}
-                                                    onChange={(e) => {
-                                                        const checked = e.target.checked;
-                                                        setIsCountryPartyChecked(checked);
-
-
-                                                    }}
-                                                    disabled
-                                                    style={{ marginRight: "8px" }}
-                                                />
-                                                I agree with Country Party Declaration
-                                            </label>
-                                        </div>
+                                   
 
                                         {/* Show these 3 fields only when BOTH checkboxes are ticked */}
-                                        {isDeclarationChecked && isCountryPartyChecked && (
+                                 
                                             <div className={styles.declarationBox}>
                                                 <div className={styles.fieldRow}>
                                                     <label className={styles.fieldLabel}>Place <span className={styles.requiredSymbol}>*</span></label>
@@ -5041,10 +5010,7 @@ const VmsRequest = () => {
 
                                                 </div>
                                             </div>
-                                        )}
-
-
-
+                                        
 
                                         {showModal && (
                                             <div className={styles.modalOverlay}>
