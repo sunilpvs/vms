@@ -302,42 +302,100 @@ const VmsRequest = () => {
 
     const financialYears = generateFinancialYears();
     const [formData, setFormData] = useState({
-        fy1: "",
+      fy1: "",
         fy2: "",
-        fy3: "",
+        it1_id: null,
+        it2_id: null,
+        currencyType1: "",
+        currencyType2: "",
+        currencyName1: "",
+        currencyName2: "",
         turnover1: "",
         turnover2: "",
-        turnover3: "",
         itrStatus1: "",
         itrStatus2: "",
-        itrStatus3: "",
         ackNo1: "",
         ackNo2: "",
-        ackNo3: "",
         filedDate1: "",
         filedDate2: "",
-        filedDate3: "",
+
     });
 
 
 
-    // ✅ Handle all input fields (including turnover validation)
+    useEffect(() => {
+        const currentYear = new Date().getFullYear();
+        const fy1 = `${currentYear - 1}-${currentYear}`;
+        const fy2 = `${currentYear - 2}-${currentYear - 1}`;
+
+
+        setFormData((prev) => ({
+            ...prev,
+            fy1,
+            fy2,
+
+        }));
+    }, []);
+
+
     const handleIncomeChange = (e) => {
         const { name, value } = e.target;
 
-        // Allow only 0 or positive numbers for turnover fields
+        // 🧾 Turnover fields — allow digits + one decimal point (float values)
         if (name.startsWith("turnover")) {
-            if (value === "" || /^[0-9]*$/.test(value)) {
+            if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
                 setFormData((prev) => ({ ...prev, [name]: value }));
             }
             return;
         }
 
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        // 🧾 ITR Acknowledgment Number — uppercase alphanumeric only
+        if (name.startsWith("ackNo")) {
+            const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            setFormData((prev) => ({ ...prev, [name]: cleaned }));
+            return;
+        }
+
+        // 🌐 Dropdown fields (Yes/No, Year, Month, Day) — keep as selected
+        if (
+            name.startsWith("itrStatus") ||
+            name.startsWith("itrYear") ||
+            name.startsWith("itrMonth") ||
+            name.startsWith("itrDay")
+        ) {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        } else {
+            // Default — just set value as-is
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        }
+
+        // 🧮 Keep your existing day validation logic
+        setFormData((prev) => {
+            const updated = { ...prev, [name]: value };
+
+            // Handle ITR day validation when month/year changes
+            const itrMonthMatch = name.match(/^itrMonth(\d+)$/);
+            const itrYearMatch = name.match(/^itrYear(\d+)$/);
+
+            if (itrMonthMatch || itrYearMatch) {
+                const idx = itrMonthMatch ? itrMonthMatch[1] : itrYearMatch[1];
+                const monthKey = `itrMonth${idx}`;
+                const yearKey = `itrYear${idx}`;
+                const dayKey = `itrDay${idx}`;
+
+                const maxDays = getDaysInMonth(updated[monthKey], updated[yearKey]);
+                const curr = Number(updated[dayKey]);
+
+                if (updated[dayKey] && (isNaN(curr) || curr > maxDays)) {
+                    updated[dayKey] = ""; // reset invalid day
+                }
+            }
+
+            return updated;
+        });
     };
+
+
 
     // ✅ Get dynamic financial year options
     const getFilteredYears = (field) => {
@@ -354,12 +412,6 @@ const VmsRequest = () => {
         }
         return [];
     };
-
-
-
-
-
-
 
 
 
@@ -727,12 +779,12 @@ const VmsRequest = () => {
             cleaned = value.toLowerCase();
         }
 
-        // 🟢 Phone numbers — digits and +, -
+        // Phone numbers — digits and +, -
         else if (["telephone", "contact_person_mobile", "accounts_person_contact_no"].includes(name)) {
             cleaned = value.replace(/[^0-9+\-]/g, "");
         }
 
-        // 🟢 Dropdowns — keep as selected
+        // Dropdowns — keep as selected
         else if (
             [
                 "business_entity_type",
@@ -950,7 +1002,7 @@ const VmsRequest = () => {
     useEffect(() => {
         const fetchGoodsServices = async () => {
             try {
-                const response = await getGoodsAndServices(referenceId);
+                const response = await getGoodsAndServices(selectedReferenceId);
                 const data = response?.data;
 
                 if (!data) return;
@@ -1003,8 +1055,8 @@ const VmsRequest = () => {
             }
         };
 
-        if (referenceId) fetchGoodsServices();
-    }, [referenceId]);
+        if (selectedReferenceId) fetchGoodsServices();
+    }, [selectedReferenceId]);
 
 
     // get gst registrations and gst type
@@ -1506,11 +1558,11 @@ const VmsRequest = () => {
 
             if (isUpdate) {
                 // PUT request (update)
-                await updateIncomeTaxDetails(referenceId, requestBody);
+                await updateIncomeTaxDetails(selectedReferenceId, requestBody);
             } else {
                 // POST request (create)
                 console.log("Creating Income Tax Details with payload:", requestBody);
-                await addIncomeTaxDetails(referenceId, requestBody);
+                await addIncomeTaxDetails(selectedReferenceId, requestBody);
             }
 
             // Refresh the data after successful save
@@ -2268,13 +2320,13 @@ const VmsRequest = () => {
             }
 
             // Always use the same endpoint (addDocuments) as per updated API
-            const response = await addDocuments(referenceId, formData);
+            const response = await addDocuments(selectedReferenceId, formData);
 
             if (response?.data?.message?.includes("success") || response.status === 200) {
                 toast.success("Documents saved successfully!");
 
                 // 🔄 re-fetch updated documents with correct referenceId
-                const refreshed = await getDocumentDetails(referenceId);
+                const refreshed = await getDocumentDetails(selectedReferenceId);
                 if (refreshed?.data) {
                     const updatedDocuments = {};
                     refreshed.data.forEach(doc => {
@@ -2337,10 +2389,10 @@ const VmsRequest = () => {
 
 
     useEffect(() => {
-        if (!referenceId) return;
+        if (!selectedReferenceId) return;
         const fetchDeclarations = async () => {
             try {
-                const response = await getDeclarations(referenceId);
+                const response = await getDeclarations(selectedReferenceId);
                 console.log("Fetched declarations:", response);
 
                 if (response?.data) {
@@ -4206,6 +4258,223 @@ const VmsRequest = () => {
                                         </table>
 
 
+                                    </div>
+                                )}
+
+
+                                 {/* STEP 3: Banking & Further Information */}
+                                {currentPage === 3 && (
+                                    <div className={styles.page}>
+                                        <h3>Banking Information</h3>
+
+                                        <div className={styles.fieldRow}>
+                                            <label className={styles.fieldLabel}>Account Holder’s Name
+                                                <span className={styles.requiredSymbol}>*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="account_holder_name"
+                                                value={bankInfo.account_holder_name}
+                                                onChange={handleBankDetailsChange}
+                                                className={styles.fieldInput}
+                                                required
+                                                readOnly
+                                            />
+                                        </div>
+
+                                        <div className={styles.fieldRow}>
+                                            <label className={styles.fieldLabel}>Bank Name
+                                                <span className={styles.requiredSymbol}>*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="bank_name"
+                                                value={bankInfo.bank_name}
+                                                onChange={handleBankDetailsChange}
+                                                className={styles.fieldInput}
+                                                required
+                                                readOnly
+                                            />
+                                        </div>
+
+                                        <div className={styles.fieldRow}>
+                                            <label className={styles.fieldLabel}>Bank Address
+                                                <span className={styles.requiredSymbol}>*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="bank_address"
+                                                value={bankInfo.bank_address}
+                                                onChange={handleBankDetailsChange}
+                                                className={styles.fieldInput}
+                                                required
+                                                readOnly
+                                            />
+                                        </div>
+
+                                        {/* Transaction Type */}
+                                        <div className={styles.fieldRow}>
+                                            <label className={styles.fieldLabel}>
+                                                Transaction Type <span className={styles.requiredSymbol}>*</span>
+                                            </label>
+                                            <select
+                                                name="transaction_type"
+                                                value={bankInfo.transaction_type || ""}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+
+                                                    setBankInfo((prev) => ({
+                                                        ...prev,
+                                                        transaction_type: value,
+                                                        ifsc_code: "",
+                                                        swift_code: "",
+                                                    }));
+                                                }}
+                                                className={styles.fieldInput}
+                                                required
+                                            >
+                                                <option value="">Select Transaction Type</option>
+                                                <option value="Domestic">Domestic</option>
+                                                <option value="International">International</option>
+                                                <option value="Domestic and International">Domestic and International</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Country */}
+                                        <div className={styles.fieldRow}>
+                                            <label className={styles.fieldLabel}>Country</label>
+                                            <select
+                                                name="country_type"
+                                                value={bankInfo.country_type}
+                                                onChange={(e) => {
+                                                    const selected = e.target.value;
+
+                                                    if (selected === "India") {
+                                                        const india = countries.find(c => c.country.toLowerCase() === "india");
+
+                                                        setIsOtherBankCountry(false);   // ✅ FIX
+
+                                                        setBankInfo((prev) => ({
+                                                            ...prev,
+                                                            country_type: "India",
+                                                            country_id: india?.id || null,
+                                                            country_text: "",
+                                                            state_id: "",
+                                                            state_text: "",
+                                                        }));
+                                                    } else {
+                                                        setIsOtherBankCountry(true);    // ✅ FIX
+
+                                                        setBankInfo((prev) => ({
+                                                            ...prev,
+                                                            country_type: "Others",
+                                                            country_id: null,
+                                                            state_id: null,
+                                                            country_text: "",
+                                                            state_text: "",
+                                                        }));
+                                                    }
+                                                }}
+                                                className={styles.fieldInput}
+                                            >
+                                                <option value="">-- Select Country --</option>
+                                                <option value="India">India</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Specify Country if not India */}
+                                        {isOtherBankCountry && (
+                                            <>
+                                                {/* Country Text */}
+                                                <div className={styles.fieldRow}>
+                                                    <label className={styles.fieldLabel}>Specify Country</label>
+                                                    <input
+                                                        type="country_text"
+                                                        value={bankInfo.country_text}
+                                                        onChange={(e) =>
+                                                            setBankInfo((prev) => ({
+                                                                ...prev,
+                                                                country_text: e.target.value.toUpperCase(),
+                                                            }))
+                                                        }
+                                                        required
+                                                        className={styles.fieldInput}
+                                                    />
+                                                </div>
+
+
+                                            </>
+                                        )}
+
+                                        {/* Account Number */}
+                                        <div className={styles.fieldRow}>
+                                            <label className={styles.fieldLabel}>
+                                                Account Number <span className={styles.requiredSymbol}>*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="account_number"
+                                                value={bankInfo.account_number || ""}
+                                                onChange={handleBankDetailsChange}
+                                                className={styles.fieldInput}
+                                                required
+                                                readOnly
+                                            />
+                                        </div>
+
+                                        {/* IFSC / SWIFT based on Transaction Type */}
+                                        {(bankInfo.transaction_type === "Domestic" || bankInfo.transaction_type === "Domestic and International") && (
+                                            <div className={styles.fieldRow}>
+                                                <label className={styles.fieldLabel}>
+                                                    IFSC Code <span className={styles.requiredSymbol}>*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="ifsc_code"
+                                                    value={bankInfo.ifsc_code || ""}
+                                                    onChange={(e) =>
+                                                        setBankInfo((prev) => ({ ...prev, ifsc_code: e.target.value.toUpperCase() }))
+                                                    }
+                                                    maxLength={11}
+                                                    className={styles.fieldInput}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {(bankInfo.transaction_type === "International" || bankInfo.transaction_type === "Domestic and International") && (
+                                            <div className={styles.fieldRow}>
+                                                <label className={styles.fieldLabel}>
+                                                    SWIFT Code <span className={styles.requiredSymbol}>*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="swift_code"
+                                                    value={bankInfo.swift_code || ""}
+                                                    onChange={(e) =>
+                                                        setBankInfo((prev) => ({ ...prev, swift_code: e.target.value.toUpperCase() }))
+                                                    }
+                                                    maxLength={11}
+                                                    className={styles.fieldInput}
+                                                />
+                                            </div>
+                                        )}
+
+
+                                        <div className={styles.fieldRow}>
+                                            <label className={styles.fieldLabel}>Beneficiary of the Account
+                                                <span className={styles.requiredSymbol}>*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="beneficiary_name"
+                                                value={bankInfo.beneficiary_name}
+                                                onChange={handleBankDetailsChange}
+                                                className={styles.fieldInput}
+                                                required
+                                                readOnly
+                                            />
+                                        </div>
                                     </div>
                                 )}
 
