@@ -217,13 +217,7 @@ const MyProSidebar = () => {
                             selected={selected}
                             setSelected={setSelected}
                         />
-                        <Item
-                            title="All RFIs"
-                            to="/rfqs"
-                            icon={<HowToRegIcon />} // or use <FactCheckIcon />
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
+                   
                         <Item
                             title="Vendors List"
                             to="/vendor-list"
@@ -232,13 +226,7 @@ const MyProSidebar = () => {
                             setSelected={setSelected}
                         />
 
-                           <Item
-                            title="Reinitiate Vendor"
-                            to="/reinitiated-vendor"
-                            icon={<ReplayIcon />}
-                            selected={selected}
-                            setSelected={setSelected}
-                        />
+                      
 
                         <Item
                             title="Reports"

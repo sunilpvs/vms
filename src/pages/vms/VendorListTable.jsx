@@ -2,15 +2,33 @@ import { useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
 import Header from "../../components/Header";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
+// Icons
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ReplayIcon from "@mui/icons-material/Replay";
+import EditIcon from "@mui/icons-material/Edit";
+
+// MUI Components
+import {
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 
 function VendorListTable({
   Rfqs,
-  deleteRfq,
-  editRfq,
   currentPage,
-  total,
   itemsPerPage,
   onPageChange,
   onLimitChange,
@@ -20,23 +38,64 @@ function VendorListTable({
   const theme = useTheme();
   const navigate = useNavigate();
 
-  // Filter Rfqs based on search term
+  // Re-initiate modal state
+  const [openReinitiateModal, setOpenReinitiateModal] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+
+  // Edit modal state
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [status, setStatus] = useState("");
+
+  // Search filter
   const filteredRfqs = Rfqs.filter((rfq) =>
-    `${rfq.reference_id} ${rfq.vendor_name} ${rfq.contact_name} ${rfq.email} ${rfq.mobile} ${rfq.entity} ${rfq.status}`
+    `${rfq.reference_id} ${rfq.contact_person_name}
+     ${rfq.contact_person_mobile} ${rfq.entity_name} ${rfq.status}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
 
-  // Pagination after filtering
+  // Pagination
   const totalPages = Math.ceil(filteredRfqs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRfqs = filteredRfqs.slice(startIndex, startIndex + itemsPerPage);
-
+  const paginatedRfqs = filteredRfqs.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   const goToPage = (pageNum) => {
-    if (onPageChange && pageNum >= 1 && pageNum <= totalPages) {
+    if (pageNum >= 1 && pageNum <= totalPages) {
       onPageChange(pageNum);
     }
+  };
+
+  /* ================= Re-initiate ================= */
+
+  const handleReinitiateClick = (vendor) => {
+    setSelectedVendor(vendor);
+    setOpenReinitiateModal(true);
+  };
+
+  const handleReinitiateSubmit = () => {
+    console.log("Re-initiated vendor:", selectedVendor);
+    // API call here
+    setOpenReinitiateModal(false);
+  };
+
+  /* ================= Edit ================= */
+
+  const handleEditClick = (vendor) => {
+    setSelectedVendor(vendor);
+    setStatus(vendor.status || "");
+    setOpenEditModal(true);
+  };
+
+  const handleEditSubmit = () => {
+    console.log("Updated Status:", {
+      reference_id: selectedVendor.reference_id,
+      status,
+    });
+    // API call here
+    setOpenEditModal(false);
   };
 
   return (
@@ -44,136 +103,184 @@ function VendorListTable({
       <Header title="Vendors List" subtitle="Final Vendors List" />
 
       <div className="container mt-4 p-3 bg-white rounded shadow-sm">
-        {/* Search and Items Per Page Controls */}
-        <div className="d-flex align-items-center justify-content-between flex-wrap mb-3">
-          <div className="me-3 mb-2" style={{ flex: 1, minWidth: "200px" }}>
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => onSearch(e.target.value)}
-              className="form-control"
-            />
-          </div>
+        {/* Search & Limit */}
+        <div className="d-flex justify-content-between mb-3">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => onSearch(e.target.value)}
+            className="form-control w-50"
+          />
 
-          <div className="d-flex align-items-center mb-2">
-            <label htmlFor="limitSelect" className="form-label me-2 mb-0 text-body">
-              Items per page:
-            </label>
-            <select
-              id="limitSelect"
-              className="form-select"
-              style={{ width: "250px" }}
-              value={itemsPerPage}
-              onChange={(e) => {
-                onLimitChange(parseInt(e.target.value, 10));
-                onPageChange(1); // Reset to page 1
-              }}
-            >
-              {[5, 10, 20, 50].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            className="form-select w-25"
+            value={itemsPerPage}
+            onChange={(e) => {
+              onLimitChange(parseInt(e.target.value, 10));
+              onPageChange(1);
+            }}
+          >
+            {[5, 10, 20, 50].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Table */}
         <div className="table-responsive">
-          <table className="table table-hover table-bordered align-middle text-center">
-           <thead className="table-dark">
+          <table className="table table-bordered table-hover text-center align-middle">
+            <thead className="table-dark">
+              <tr>
+                <th>RFQ ID</th>
+                <th>Vendor Code</th>
+                <th>Entity</th>
+                <th>Contact Name</th>
+                <th>Mobile</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
 
-           {/*  "contact_person_name": "Bulusu V S L N Bhaskara Tejs",
-        "company_email": "",
-        "contact_person_mobile": "06303639701",
-        "reference_id": "RFI-VEN-001",
-        "vendor_code": null,
-        "status": "Submitted",
-        "entity_name": "SHRI CHANDRA BULK CARGO SERVICE",
-        "reg_number": "",
-        "cin_number": null,
-        "expiry_date": null,
-        "country": "India",
-        "state": "Andhra Pradesh" */}
-  <tr>
-    <th>RFQ ID</th>
-    <th>Vendor Code</th>
-    <th>Entity</th>
-    <th>Contact Name</th>
-    <th>Contact Person Mobile</th>
-    <th>Expiry Date</th>
-    <th>Status</th>
-    <th>Actions</th>
-  </tr>
-</thead>
-<tbody>
-  {paginatedRfqs.length === 0 ? (
-    <tr>
-      <td colSpan="9" className="text-center text-muted">
-        No RFQs found.
-      </td>
-    </tr>
-  ) : (
-    paginatedRfqs.map((data) => (
-      <tr key={data.id}>
-        <td>{data.reference_id}</td>
-        <td>{data.vendor_code || 'N/A'}</td>
-        <td>{data.entity_name}</td>
-        <td>{data.contact_person_name}</td>
-        <td>{data.contact_person_mobile || 'N/A'}</td>
-        <td>{data.expiry_date || 'N/A'}</td>
-        <td>{data.status}</td>
-        <td>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => navigate("/rfqs/" + data.reference_id)}
-                      >
-                        View Details
-                      </button>
+            <tbody>
+              {paginatedRfqs.length === 0 ? (
+                <tr>
+                  <td colSpan="7">No records found</td>
+                </tr>
+              ) : (
+                paginatedRfqs.map((data) => (
+                  <tr key={data.id}>
+                    <td>{data.reference_id}</td>
+                    <td>{data.vendor_code || "N/A"}</td>
+                    <td>{data.entity_name}</td>
+                    <td>{data.contact_person_name}</td>
+                    <td>{data.contact_person_mobile}</td>
+                    <td>{data.status}</td>
+                    <td>
+                      {/* View */}
+                      <Tooltip title="View">
+                        <IconButton
+                          color="primary"
+                          size="small"
+                          onClick={() =>
+                            navigate("/rfqs/" + data.reference_id)
+                          }
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                      {/* Re-initiate */}
+                      <Tooltip title="Re-initiate">
+                        <IconButton
+                          color="warning"
+                          size="small"
+                          onClick={() => handleReinitiateClick(data)}
+                        >
+                          <ReplayIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                      {/* Edit */}
+                      <Tooltip title="Edit Status">
+                        <IconButton
+                          color="secondary"
+                          size="small"
+                          onClick={() => handleEditClick(data)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
                     </td>
-      </tr>
-    ))
-  )}
-</tbody>
-
+                  </tr>
+                ))
+              )}
+            </tbody>
           </table>
         </div>
 
         {/* Pagination */}
-        <div className="d-flex justify-content-between align-items-center mt-3">
-          <span className="form-label me-2 mb-0 text-body">
-            Showing {paginatedRfqs.length} of {filteredRfqs.length} matching RFQs
-          </span>
-          <div>
+        <div className="mt-3 text-end">
+          <button
+            className="btn btn-sm btn-outline-secondary me-1"
+            disabled={currentPage === 1}
+            onClick={() => goToPage(currentPage - 1)}
+          >
+            Prev
+          </button>
+          {[...Array(totalPages)].map((_, i) => (
             <button
-              className="btn btn-outline-secondary btn-sm me-1"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
+              key={i}
+              className={`btn btn-sm me-1 ${
+                currentPage === i + 1
+                  ? "btn-primary"
+                  : "btn-outline-secondary"
+              }`}
+              onClick={() => goToPage(i + 1)}
             >
-              Prev
+              {i + 1}
             </button>
-            {[...Array(totalPages)].map((_, index) => (
-              <button
-                key={index}
-                className={`btn btn-sm me-1 ${
-                  currentPage === index + 1 ? "btn-primary" : "btn-outline-secondary"
-                }`}
-                onClick={() => goToPage(index + 1)}
-              >
-                {index + 1}
-              </button>
-            ))}
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </button>
-          </div>
+          ))}
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={currentPage === totalPages}
+            onClick={() => goToPage(currentPage + 1)}
+          >
+            Next
+          </button>
         </div>
       </div>
+
+      {/* Re-initiate Modal */}
+      <Dialog open={openReinitiateModal} onClose={() => setOpenReinitiateModal(false)}
+         PaperProps={{
+    sx: {
+      backgroundColor: "#ffffff",
+      borderRadius: 2,
+      padding: 1,
+    },
+  }}
+>
+        <DialogTitle>Confirm Re-initiate</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to re-initiate{" "}
+            <strong>{selectedVendor?.entity_name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenReinitiateModal(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleReinitiateSubmit}>
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={openEditModal} onClose={() => setOpenEditModal(false)}>
+        <DialogTitle>Edit Vendor Status</DialogTitle>
+        <DialogContent sx={{ minWidth: 300 }}>
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={status}
+              label="Status"
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <MenuItem value="Blocked">Blocked</MenuItem>
+              <MenuItem value="Suspended">Suspended</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditModal(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleEditSubmit}>
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
@@ -181,7 +288,6 @@ function VendorListTable({
 VendorListTable.propTypes = {
   Rfqs: PropTypes.array.isRequired,
   currentPage: PropTypes.number.isRequired,
-  total: PropTypes.number,
   itemsPerPage: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired,
   onLimitChange: PropTypes.func.isRequired,
