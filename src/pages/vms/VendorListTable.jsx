@@ -150,7 +150,8 @@ function VendorListTable({
                 <th>Vendor Code</th>
                 <th>Entity</th>
                 <th>Contact Name</th>
-                <th>Mobile</th>
+                <th>Contact Person Mobile</th>
+                <th>Expiry Date</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -169,6 +170,7 @@ function VendorListTable({
                     <td>{data.entity_name}</td>
                     <td>{data.contact_person_name}</td>
                     <td>{data.contact_person_mobile}</td>
+                    <td>{data.expiry_date}</td>
                     <td>{data.status}</td>
                     <td>
                       {/* View */}
@@ -226,8 +228,8 @@ function VendorListTable({
             <button
               key={i}
               className={`btn btn-sm me-1 ${currentPage === i + 1
-                  ? "btn-primary"
-                  : "btn-outline-secondary"
+                ? "btn-primary"
+                : "btn-outline-secondary"
                 }`}
               onClick={() => goToPage(i + 1)}
             >
@@ -255,30 +257,32 @@ function VendorListTable({
           },
         }}
       >
-        <DialogTitle sx={{ color: "#000", fontWeight: 600 }}>
+        <DialogTitle sx={{ color: "#000", fontWeight: 700, fontSize: "25px" }}>
           Confirm Re-initiate
         </DialogTitle>
 
         <DialogContent>
-          <Typography sx={{ color: "#000", mb: 1 }}>
-            Are you sure you want to re-initiate{" "}
-            <strong>{selectedVendor?.entity_name}</strong>?
+          <Typography sx={{ color: "#000", mb: 1, fontSize: "16px" }}>
+            Are you sure you want to re-initiate vendor: {" "}
+            <strong>{selectedVendor?.vendor_code}</strong>?
           </Typography>
 
           {/* Warning text */}
-          <Typography sx={{ color: "red", fontSize: "0.9rem" }}>
+          <Typography sx={{ color: "red", fontSize: "16px" }}>
             Once submitted, this action cannot be undone.
           </Typography>
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setOpenReinitiateModal(false)}>
+          <Button
+            onClick={() => setOpenReinitiateModal(false)}>
             Cancel
           </Button>
 
           <Button
             variant="contained"
-            color="error"
+            color="primary"
+
             onClick={handleReinitiateSubmit}
           >
             Submit
@@ -296,12 +300,12 @@ function VendorListTable({
           },
         }}
       >
-        <DialogTitle sx={{ color: "#000", fontWeight: 600 }}>
+        <DialogTitle sx={{ color: "#000", fontWeight: 600, fontSize: "24px" }}>
           Edit Vendor Status
         </DialogTitle>
 
         <DialogContent sx={{ minWidth: 320 }}>
-          <Typography sx={{ color: "#000", mb: 1 }}>
+          <Typography sx={{ color: "#000", mb: 1, fontSize: "16px" }}>
             Current Status:{" "}
             <strong>{selectedVendor?.status}</strong>
           </Typography>
@@ -314,8 +318,20 @@ function VendorListTable({
             <Select
               value={status}
               label="Select New Status"
-              sx={{ color: "#000" }}
+              // sx={{ color: "#000" }}
               onChange={(e) => setStatus(e.target.value)}
+              sx={{
+                color: "#000",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#000",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#000",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#000",
+                },
+              }}
             >
               {getStatusOptions(selectedVendor?.status).map((opt) => (
                 <MenuItem key={opt} value={opt}>
