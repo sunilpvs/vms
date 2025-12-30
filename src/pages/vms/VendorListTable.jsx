@@ -83,12 +83,24 @@ function VendorListTable({
 
   /* ================= Edit ================= */
 
-  const handleEditClick = (vendor) => {
-    setSelectedVendor(vendor);
-    setStatus(vendor.status || "");
-    setOpenEditModal(true);
+  const getStatusOptions = (currentStatus) => {
+    switch (currentStatus) {
+      case "Approved":
+        return ["Blocked", "Suspended"];
+      case "Blocked":
+        return ["Approved", "Suspended"];
+      case "Suspended":
+        return ["Approved", "Blocked"];
+      default:
+        return [];
+    }
   };
 
+  const handleEditClick = (vendor) => {
+    setSelectedVendor(vendor);
+    setStatus(""); // force user to choose new status
+    setOpenEditModal(true);
+  };
   const handleEditSubmit = () => {
     console.log("Updated Status:", {
       reference_id: selectedVendor.reference_id,
@@ -213,11 +225,10 @@ function VendorListTable({
           {[...Array(totalPages)].map((_, i) => (
             <button
               key={i}
-              className={`btn btn-sm me-1 ${
-                currentPage === i + 1
+              className={`btn btn-sm me-1 ${currentPage === i + 1
                   ? "btn-primary"
                   : "btn-outline-secondary"
-              }`}
+                }`}
               onClick={() => goToPage(i + 1)}
             >
               {i + 1}
@@ -233,50 +244,98 @@ function VendorListTable({
         </div>
       </div>
 
-      {/* Re-initiate Modal */}
-      <Dialog open={openReinitiateModal} onClose={() => setOpenReinitiateModal(false)}
-         PaperProps={{
-    sx: {
-      backgroundColor: "#ffffff",
-      borderRadius: 2,
-      padding: 1,
-    },
-  }}
->
-        <DialogTitle>Confirm Re-initiate</DialogTitle>
+      <Dialog
+        open={openReinitiateModal}
+        onClose={() => setOpenReinitiateModal(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#ffffff",
+            borderRadius: 2,
+            padding: 1,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "#000", fontWeight: 600 }}>
+          Confirm Re-initiate
+        </DialogTitle>
+
         <DialogContent>
-          <Typography>
+          <Typography sx={{ color: "#000", mb: 1 }}>
             Are you sure you want to re-initiate{" "}
             <strong>{selectedVendor?.entity_name}</strong>?
           </Typography>
+
+          {/* Warning text */}
+          <Typography sx={{ color: "red", fontSize: "0.9rem" }}>
+            Once submitted, this action cannot be undone.
+          </Typography>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={() => setOpenReinitiateModal(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleReinitiateSubmit}>
+          <Button onClick={() => setOpenReinitiateModal(false)}>
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleReinitiateSubmit}
+          >
             Submit
           </Button>
         </DialogActions>
       </Dialog>
+      <Dialog
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#ffffff",
+            borderRadius: 2,
+            padding: 1,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "#000", fontWeight: 600 }}>
+          Edit Vendor Status
+        </DialogTitle>
 
-      {/* Edit Modal */}
-      <Dialog open={openEditModal} onClose={() => setOpenEditModal(false)}>
-        <DialogTitle>Edit Vendor Status</DialogTitle>
-        <DialogContent sx={{ minWidth: 300 }}>
+        <DialogContent sx={{ minWidth: 320 }}>
+          <Typography sx={{ color: "#000", mb: 1 }}>
+            Current Status:{" "}
+            <strong>{selectedVendor?.status}</strong>
+          </Typography>
+
           <FormControl fullWidth margin="dense">
-            <InputLabel>Status</InputLabel>
+            <InputLabel sx={{ color: "#000" }}>
+              Select New Status
+            </InputLabel>
+
             <Select
               value={status}
-              label="Status"
+              label="Select New Status"
+              sx={{ color: "#000" }}
               onChange={(e) => setStatus(e.target.value)}
             >
-              <MenuItem value="Blocked">Blocked</MenuItem>
-              <MenuItem value="Suspended">Suspended</MenuItem>
+              {getStatusOptions(selectedVendor?.status).map((opt) => (
+                <MenuItem key={opt} value={opt}>
+                  {opt}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={() => setOpenEditModal(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleEditSubmit}>
+          <Button onClick={() => setOpenEditModal(false)}>
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            disabled={!status}
+            onClick={handleEditSubmit}
+          >
             Submit
           </Button>
         </DialogActions>
