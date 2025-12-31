@@ -319,9 +319,9 @@ const filteredVendors = Array.isArray(vendors)
         </DialogTitle>
 
         <DialogContent>
-          <Typography sx={{ color: "#000", mb: 1, fontSize: "16px" }}>
-            Are you sure you want to re-initiate vendor: {" "}
-            <strong>{selectedVendor?.vendor_code}</strong>?
+          <Typography sx={{ color: "#000", mb: 1 }}>
+            Are you sure you want to re-initiate{" "}
+            <strong>{selectedVendor?.entity_name}</strong>?
           </Typography>
 
           {/* Warning text */}
