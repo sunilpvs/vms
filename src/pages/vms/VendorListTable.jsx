@@ -260,7 +260,7 @@ function VendorListTable({
         </DialogTitle>
 
         <DialogContent>
-          <Typography sx={{ color: "#000", mb: 1 }}>
+          <Typography sx={{ color: "#000", mb: 1, }}>
             Are you sure you want to re-initiate{" "}
             <strong>{selectedVendor?.entity_name}</strong>?
           </Typography>
