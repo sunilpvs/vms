@@ -178,9 +178,7 @@ function VendorListTable({
                         <IconButton
                           color="primary"
                           size="small"
-                          onClick={() =>
-                            navigate("/rfqs/" + data.reference_id)
-                          }
+                         onClick={() => navigate(`/vendor-rfqs/${data.vendor_code}`)}
                         >
                           <VisibilityIcon />
                         </IconButton>
