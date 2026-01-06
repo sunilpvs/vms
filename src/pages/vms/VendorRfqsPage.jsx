@@ -191,7 +191,7 @@ function VendorRfqPage() {
                     <td>{r.contact_person_name}</td>
                     <td>{r.contact_person_mobile}</td>
                     <td>{r.status}</td>
-                    <td>{new Date(r.expiry_date).toLocaleDateString('en-GB')}</td>
+                    <td>{r.expiry_date ? new Date(r.expiry_date).toLocaleDateString('en-GB') : "N/A"}</td>
                     <td>
                       <Tooltip title="View Details">
                         <IconButton

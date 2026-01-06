@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { blockVendor, suspendVendor, activateVendor } from "../../services/vms/vendorService";
+import { reinitiateVendor } from "../../services/vms/rfqReviewService";
 
 // Icons
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -82,9 +83,17 @@ const filteredVendors = Array.isArray(vendors)
     setOpenReinitiateModal(true);
   };
 
-  const handleReinitiateSubmit = () => {
+  const handleReinitiateSubmit = async () => {
     console.log("Re-initiated vendor:", selectedVendor);
-    // API call here
+    try{
+      await reinitiateVendor(selectedVendor.vendor_code, {});
+      toast.success("Vendor re-initiated successfully");
+    }
+    catch(err){
+      console.error("Re-initiate failed", err);
+      toast.error(err?.response?.data?.error || "Failed to re-initiate vendor");
+    }
+
     setOpenReinitiateModal(false);
   };
 
@@ -228,17 +237,19 @@ const filteredVendors = Array.isArray(vendors)
                         </IconButton>
                       </Tooltip>
 
-                      {/* Re-initiate */}
-                      <Tooltip title="Re-initiate">
-                        <IconButton
-                          color="warning"
-                          size="small"
-                          onClick={() => handleReinitiateClick(data)}
-                        >
-                          <ReplayIcon />
-                        </IconButton>
-                      </Tooltip>
-
+                      {/* Re-initiate only show after approval and before 60 days of expiry date */}
+                      {(data.status_id === 11 &&
+                        (new Date(data.expiry_date) - new Date()) / (1000 * 60 * 60 * 24) <= 60) && (
+                        <Tooltip title="Re-initiate">
+                          <IconButton
+                            color="secondary"
+                            size="small"
+                            onClick={() => handleReinitiateClick(data)}
+                          >
+                            <ReplayIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       {/* Edit */}
                       <Tooltip title="Edit Status">
                         <IconButton
