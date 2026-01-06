@@ -4,6 +4,8 @@ import { Box } from "@mui/material";
 import Header from "../../components/Header";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { blockVendor, suspendVendor, activateVendor } from "../../services/vms/vendorService";
 
 // Icons
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -27,13 +29,14 @@ import {
 } from "@mui/material";
 
 function VendorListTable({
-  Rfqs,
+  vendors,
   currentPage,
   itemsPerPage,
   onPageChange,
   onLimitChange,
   onSearch,
   searchTerm,
+  onRefresh,
 }) {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -45,19 +48,23 @@ function VendorListTable({
   // Edit modal state
   const [openEditModal, setOpenEditModal] = useState(false);
   const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Search filter
-  const filteredRfqs = Rfqs.filter((rfq) =>
-    `${rfq.reference_id} ${rfq.contact_person_name}
-     ${rfq.contact_person_mobile} ${rfq.entity_name} ${rfq.status}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+const filteredVendors = Array.isArray(vendors)
+  ? vendors.filter((vendor) =>
+      `${vendor.reference_id ?? ""} ${vendor.contact_person_name ?? ""}
+       ${vendor.contact_person_mobile ?? ""} ${vendor.entity_name ?? ""} ${vendor.status ?? ""}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+  : [];
+
 
   // Pagination
-  const totalPages = Math.ceil(filteredRfqs.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredVendors.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRfqs = filteredRfqs.slice(
+  const paginatedVendors = filteredVendors.slice(
     startIndex,
     startIndex + itemsPerPage
   );
@@ -83,16 +90,24 @@ function VendorListTable({
 
   /* ================= Edit ================= */
 
+  // Allowed actions per current status, per business rules
   const getStatusOptions = (currentStatus) => {
-    switch (currentStatus) {
-      case "Approved":
-        return ["Blocked", "Suspended"];
-      case "Blocked":
-        return ["Approved", "Suspended"];
-      case "Suspended":
-        return ["Approved", "Blocked"];
+    const s = (currentStatus || "").toLowerCase();
+    switch (s) {
+      case "active":
+        // Only approved or expired vendors can be suspended; approved can be blocked
+        return ["Block", "Suspend"];
+      case "blocked":
+        // Only blocked vendors can be activated
+        return ["Activate"];
+      case "suspended":
+        // Suspended can be blocked or activated
+        return ["Block", "Activate"];
+      case "expired":
+        // Expired can be blocked or suspended; cannot be activated
+        return ["Block", "Suspend"];
       default:
-        return [];
+        return ["Block", "Suspend", "Activate"];
     }
   };
 
@@ -101,13 +116,40 @@ function VendorListTable({
     setStatus(""); // force user to choose new status
     setOpenEditModal(true);
   };
-  const handleEditSubmit = () => {
-    console.log("Updated Status:", {
-      reference_id: selectedVendor.reference_id,
-      status,
-    });
-    // API call here
-    setOpenEditModal(false);
+  const handleEditSubmit = async () => {
+    if (!selectedVendor || !status) return;
+    const vendorCode = selectedVendor.vendor_code;
+
+    try {
+      setIsSubmitting(true);
+      let action = status.toLowerCase();
+      // call respective service
+      if (action === "block") {
+        await blockVendor(vendorCode);
+        toast.success("Vendor blocked successfully");
+
+      } else if (action === "suspend") {
+        await suspendVendor(vendorCode);
+        toast.success("Vendor suspended successfully");
+
+      } else if (action === "activate") {
+        await activateVendor(vendorCode);
+        toast.success("Vendor activated successfully");
+        
+      } else {
+        toast.error("Invalid action selected");
+        return;
+      }
+
+      // Refresh list
+      await onRefresh(currentPage, itemsPerPage);
+      setOpenEditModal(false);
+    } catch (err) {
+      console.error("Status update failed", err);
+      toast.error(err?.response?.data?.error || "Failed to update vendor status");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -158,19 +200,19 @@ function VendorListTable({
             </thead>
 
             <tbody>
-              {paginatedRfqs.length === 0 ? (
+              {paginatedVendors.length === 0 ? (
                 <tr>
                   <td colSpan="7">No records found</td>
                 </tr>
               ) : (
-                paginatedRfqs.map((data) => (
+                paginatedVendors.map((data) => (
                   <tr key={data.id}>
                     <td>{data.reference_id}</td>
                     <td>{data.vendor_code || "N/A"}</td>
                     <td>{data.entity_name}</td>
                     <td>{data.contact_person_name}</td>
                     <td>{data.contact_person_mobile}</td>
-                    <td>{data.expiry_date}</td>
+                    <td>{new Date(data.expiry_date).toLocaleDateString('en-GB')}</td>
                     <td>{data.status}</td>
                     <td>
                       {/* View */}
@@ -178,7 +220,9 @@ function VendorListTable({
                         <IconButton
                           color="primary"
                           size="small"
-                         onClick={() => navigate(`/vendor-rfqs/${data.vendor_code}`)}
+                         onClick={() => {
+                           navigate(`/vendor-rfqs/${encodeURIComponent(data.vendor_code)}`);
+                         }}
                         >
                           <VisibilityIcon />
                         </IconButton>
@@ -366,6 +410,7 @@ VendorListTable.propTypes = {
   onLimitChange: PropTypes.func.isRequired,
   onSearch: PropTypes.func.isRequired,
   searchTerm: PropTypes.string.isRequired,
+  onRefresh: PropTypes.func.isRequired,
 };
 
 export default VendorListTable;

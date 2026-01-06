@@ -24,3 +24,9 @@ export const submitRfq = (reference_id) => {
     return axiosInstance.post(`api/vms/rfq-review?action=submit&reference_id=${reference_id}`);
 };
 
+
+// reinitiate vendor with new rfq
+export const reinitiateVendor = (vendor_code, payload) => {
+    return axiosInstance.post(`api/vms/rfq-review?action=reinitiate&vendor_code=${vendor_code}`, payload);
+}
+

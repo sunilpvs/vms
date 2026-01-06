@@ -1,209 +1,262 @@
-import { Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+﻿import {
+  Box,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import Header from "../../components/Header";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  getAllVendorsList,
+  getVendorRfqs,
+} from "../../services/vms/vendorService";
+import toast from "react-hot-toast";
 
 function VendorRfqPage() {
-  const { vendorCode } = useParams();
+  const { vendor_code } = useParams();
   const navigate = useNavigate();
 
+  // ================= STATE =================
   const [vendors, setVendors] = useState([]);
-  const [selectedVendor, setSelectedVendor] = useState(vendorCode || "");
   const [rfqs, setRfqs] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // table controls
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  /* ================= LOAD VENDORS ================= */
+  // ================= LOAD VENDORS =================
   useEffect(() => {
-    // 🔹 Replace with API
-    setVendors([
-      { code: "V001", name: "ABC Technologies Pvt Ltd" },
-      { code: "V002", name: "XYZ Solutions Limited" },
-    ]);
+    fetchVendors();
   }, []);
 
-  /* ================= LOAD RFQS BY VENDOR ================= */
+  const fetchVendors = async () => {
+    try {
+      const res = await getAllVendorsList(1, 100);
+      setVendors(res.data || []);
+    } catch (error) {
+      console.error("Error loading vendors", error);
+      toast.error("Failed to load vendors list");
+    }
+  };
+
+  // ================= LOAD RFQS (URL IS SOURCE OF TRUTH) =================
   useEffect(() => {
-    if (!selectedVendor) return;
+    if (!vendor_code) {
+      setRfqs([]);
+      return;
+    }
 
-    // 🔹 Replace with API (vendorCode)
-    setRfqs([
-      {
-        reference_id: "RFQ-101",
-        vendor_name: "ABC Technologies Pvt Ltd",
-        email: "abc@test.com",
-        mobile: "9876543210",
-        entity: "IT",
-        status_name: "Approved",
-      },
-      {
-        reference_id: "RFQ-102",
-        vendor_name: "ABC Technologies Pvt Ltd",
-        email: "abc@test.com",
-        mobile: "9876543210",
-        entity: "Finance",
-        status_name: "Suspended",
-      },
-    ]);
+    fetchVendorRfqs(vendor_code);
+  }, [vendor_code]);
 
-    setCurrentPage(1);
-  }, [selectedVendor]);
 
-  /* ================= SEARCH ================= */
+  const fetchVendorRfqs = async (vendorCode) => {
+    setLoading(true);
+    try {
+      const res = await getVendorRfqs(vendorCode);
+      setRfqs(res.data?.["vendor-rfqs"] || []);
+      console.log("Vendor RFQs:", res.data?.["vendor-rfqs"]);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error("Error loading vendor RFQs", error);
+      toast.error("Failed to load vendor RFQs");
+      setRfqs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= HANDLE VENDOR CHANGE =================
+  const handleVendorChange = (vendorCode) => {
+    navigate(
+      vendorCode
+        ? `/vendor-rfqs/${encodeURIComponent(vendorCode)}`
+        : "/vendor-rfqs"
+    );
+  };
+
+  // ================= SEARCH =================
   const filteredRfqs = rfqs.filter((r) =>
     `${r.reference_id} ${r.vendor_name} ${r.email} ${r.mobile} ${r.entity} ${r.status_name}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
 
-  /* ================= PAGINATION ================= */
+  // ================= PAGINATION =================
   const totalPages = Math.ceil(filteredRfqs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRfqs = filteredRfqs.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedRfqs = filteredRfqs.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
+  // ================= RENDER =================
   return (
     <Box m="20px">
       <Header title="Vendor RFQs" subtitle="Vendor wise RFQ details" />
 
       {/* ================= Vendor Dropdown ================= */}
-      <FormControl fullWidth sx={{ maxWidth: 450, mb: 3 }}>
-        <InputLabel sx={{ color: "#000" }}>
+      <div className="mb-3">
+        <label className="form-label text-dark fw-semibold">
           Vendor Code - Vendor Name
-        </InputLabel>
-        <Select
-          value={selectedVendor}
-          label="Vendor Code - Vendor Name"
-          onChange={(e) => {
-            setSelectedVendor(e.target.value);
-            navigate(`/vendor-rfqs/${e.target.value}`);
-          }}
-          sx={{
-            color: "#000",
-            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#000" },
-          }}
-        >
-          {vendors.map((v) => (
-            <MenuItem key={v.code} value={v.code}>
-              {v.code} - {v.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* ================= Search & Limit ================= */}
-      <div className="d-flex justify-content-between mb-3">
-        <input
-          type="text"
-          className="form-control w-50"
-          placeholder="Search RFQs..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-
+        </label>
         <select
-          className="form-select w-25"
-          value={itemsPerPage}
-          onChange={(e) => {
-            setItemsPerPage(Number(e.target.value));
-            setCurrentPage(1);
-          }}
+          className="form-select"
+          value={vendor_code || ""}
+          onChange={(e) => handleVendorChange(e.target.value)}
         >
-          {[5, 10, 20, 50].map((n) => (
-            <option key={n} value={n}>
-              {n}
+          <option value="">-- Select Vendor --</option>
+          {vendors.map((vendor) => (
+            <option
+              key={vendor.vendor_code}
+              value={vendor.vendor_code}
+            >
+              {vendor.vendor_code} - {vendor.full_registered_name}
             </option>
           ))}
         </select>
       </div>
 
-      {/* ================= RFQ TABLE ================= */}
-      <div className="table-responsive bg-white rounded shadow-sm p-3">
-        <table className="table table-bordered table-hover align-middle text-center">
-          <thead className="table-dark">
-            <tr>
-              <th>Reference (RFQ) ID</th>
-              <th>Vendor Name</th>
-              <th>Vendor Email</th>
-              <th>Vendor Mobile</th>
-              <th>Entity</th>
-              <th>Status</th>
-               <th>Actions</th>
-            </tr>
-          </thead>
+      <div className="container mt-4 p-3 bg-white rounded shadow-sm">
+        {/* ================= Search & Limit ================= */}
+        <div className="d-flex justify-content-between mb-3">
+          <input
+            type="text"
+            className="form-control w-50"
+            placeholder="Search RFQs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
-          <tbody>
-            {paginatedRfqs.length === 0 ? (
-              <tr>
-                <td colSpan="6">No RFQs found</td>
-              </tr>
-            ) : (
-              paginatedRfqs.map((r) => (
-                <tr key={r.reference_id}>
-                  <td>{r.reference_id}</td>
-                  <td>{r.vendor_name}</td>
-                  <td>{r.email}</td>
-                  <td>{r.mobile}</td>
-                  <td>{r.entity}</td>
-                  <td>{r.status_name}</td>
-                  <td>
-  <Tooltip title="View Details">
-    <IconButton
-      color="primary"
-      size="small"
-        onClick={() =>
-                            navigate("/rfqs/" + data.reference_id)
-                          }
-                        >
-    
-      <VisibilityIcon />
-    </IconButton>
-  </Tooltip>
-</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ================= Pagination ================= */}
-      <div className="mt-3 text-end">
-        <button
-          className="btn btn-outline-secondary btn-sm me-1"
-          disabled={currentPage === 1}
-          onClick={() => goToPage(currentPage - 1)}
-        >
-          Prev
-        </button>
-
-        {[...Array(totalPages)].map((_, i) => (
-          <button
-            key={i}
-            className={`btn btn-sm me-1 ${
-              currentPage === i + 1
-                ? "btn-primary"
-                : "btn-outline-secondary"
-            }`}
-            onClick={() => goToPage(i + 1)}
+          <select
+            className="form-select w-25"
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
           >
-            {i + 1}
-          </button>
-        ))}
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <button
-          className="btn btn-outline-secondary btn-sm"
-          disabled={currentPage === totalPages}
-          onClick={() => goToPage(currentPage + 1)}
-        >
-          Next
-        </button>
+        {/* ================= RFQ TABLE ================= */}
+        <div className="table-responsive">
+          <table className="table table-bordered table-hover text-center">
+            <thead className="table-dark">
+              <tr>
+                <th>Reference (RFQ) ID</th>
+                <th>Vendor Name</th>
+                <th>Vendor Email</th>
+                <th>Vendor Mobile</th>
+                <th>Contact Person Name</th>
+                <th>Contact Person Mobile</th>
+                <th>Status</th>
+                <th>Expiry Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="8">Loading...</td>
+                </tr>
+              ) : paginatedRfqs.length === 0 ? (
+                <tr>
+                  <td colSpan="9">
+                    {vendor_code
+                      ? "No RFQs found for this vendor"
+                      : "Please select a vendor"}
+                  </td>
+                </tr>
+              ) : (
+                paginatedRfqs.map((r) => (
+                  <tr key={r.reference_id}>
+                    <td>{r.reference_id}</td>
+                    <td>{r.full_registered_name}</td>
+                    <td>{r.email}</td>
+                    <td>{r.mobile}</td>
+                    <td>{r.contact_person_name}</td>
+                    <td>{r.contact_person_mobile}</td>
+                    <td>{r.status}</td>
+                    <td>{new Date(r.expiry_date).toLocaleDateString('en-GB')}</td>
+                    <td>
+                      <Tooltip title="View Details">
+                        <IconButton
+                          color="primary"
+                          size="small"
+                          onClick={() => navigate(`/rfqs/${r.reference_id}`)}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+
+                      {r.status === 8 || r.status === 9 ? (
+                        <button
+                          className="btn btn-sm btn-primary ms-3 mt-2"
+                          onClick={() => navigate(`/review-vendor/${r.reference_id}`)}
+                        >
+                          Review
+                        </button>
+                      ) : r.status === 7 || r.status === 10 ? (
+                        <span className="text-muted">Not Submitted</span>
+                      ) : (
+                        <div></div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ================= Pagination ================= */}
+        {totalPages > 1 && (
+          <div className="mt-3 text-end">
+            <button
+              className="btn btn-outline-secondary btn-sm me-1"
+              disabled={currentPage === 1}
+              onClick={() => goToPage(currentPage - 1)}
+            >
+              Prev
+            </button>
+
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                className={`btn btn-sm me-1 ${
+                  currentPage === i + 1
+                    ? "btn-primary"
+                    : "btn-outline-secondary"
+                }`}
+                onClick={() => goToPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => goToPage(currentPage + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </Box>
   );

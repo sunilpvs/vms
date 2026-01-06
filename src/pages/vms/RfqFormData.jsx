@@ -523,7 +523,7 @@ const RfqFormData = () => {
         const fetchCompanyInfo = async () => {
             try {
                 const response = await getCompanyInfo(selectedReferenceId);
-                const data = response?.data;
+                const data = response?.data?.counterparty;
                 if (!data) return;
 
                 const normalized = {
