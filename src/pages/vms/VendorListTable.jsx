@@ -95,7 +95,9 @@ const filteredVendors = Array.isArray(vendors)
     }
 
     setOpenReinitiateModal(false);
+    await onRefresh(currentPage, itemsPerPage);
   };
+
 
   /* ================= Edit ================= */
 
@@ -197,7 +199,7 @@ const filteredVendors = Array.isArray(vendors)
           <table className="table table-bordered table-hover text-center align-middle">
             <thead className="table-dark">
               <tr>
-                <th>RFQ ID</th>
+                <th>Active RFQ ID</th>
                 <th>Vendor Code</th>
                 <th>Entity</th>
                 <th>Contact Name</th>
@@ -216,12 +218,12 @@ const filteredVendors = Array.isArray(vendors)
               ) : (
                 paginatedVendors.map((data) => (
                   <tr key={data.id}>
-                    <td>{data.reference_id}</td>
+                    <td>{data.reference_id ? data.reference_id : "N/A"}</td>
                     <td>{data.vendor_code || "N/A"}</td>
                     <td>{data.entity_name}</td>
                     <td>{data.contact_person_name}</td>
                     <td>{data.contact_person_mobile}</td>
-                    <td>{new Date(data.expiry_date).toLocaleDateString('en-GB')}</td>
+                    <td>{data.expiry_date ? new Date(data.expiry_date).toLocaleDateString('en-GB') : "N/A"}</td>
                     <td>{data.status}</td>
                     <td>
                       {/* View */}
