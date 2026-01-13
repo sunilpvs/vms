@@ -193,7 +193,10 @@ function VendorRfqPage() {
                     <td>{r.status}</td>
                     <td>{r.expiry_date ? new Date(r.expiry_date).toLocaleDateString('en-GB') : "N/A"}</td>
                     <td>
-                      <Tooltip title="View Details">
+                      {r.status_id === 7 ? (
+                        <></>
+                      ) : (
+                        <Tooltip title="View Details">
                         <IconButton
                           color="primary"
                           size="small"
@@ -202,15 +205,16 @@ function VendorRfqPage() {
                           <VisibilityIcon />
                         </IconButton>
                       </Tooltip>
+                      )}
 
-                      {r.status === 8 || r.status === 9 ? (
+                      {r.status_id === 8 || r.status_id === 9 ? (
                         <button
                           className="btn btn-sm btn-primary ms-3 mt-2"
                           onClick={() => navigate(`/review-vendor/${r.reference_id}`)}
                         >
                           Review
                         </button>
-                      ) : r.status === 7 || r.status === 10 ? (
+                      ) : r.status_id === 7 || r.status_id === 10 ? (
                         <span className="text-muted">Not Submitted</span>
                       ) : (
                         <div></div>
@@ -237,11 +241,10 @@ function VendorRfqPage() {
             {[...Array(totalPages)].map((_, i) => (
               <button
                 key={i}
-                className={`btn btn-sm me-1 ${
-                  currentPage === i + 1
+                className={`btn btn-sm me-1 ${currentPage === i + 1
                     ? "btn-primary"
                     : "btn-outline-secondary"
-                }`}
+                  }`}
                 onClick={() => goToPage(i + 1)}
               >
                 {i + 1}

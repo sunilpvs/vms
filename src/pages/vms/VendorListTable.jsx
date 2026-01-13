@@ -79,7 +79,9 @@ const filteredVendors = Array.isArray(vendors)
   /* ================= Re-initiate ================= */
 
   const handleReinitiateClick = (vendor) => {
-    setSelectedVendor(vendor);
+    // console the difference in days
+    console.log("Days to expiry:", (new Date(vendor.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+    setSelectedVendor(vendor); 
     setOpenReinitiateModal(true);
   };
 
@@ -247,7 +249,7 @@ const filteredVendors = Array.isArray(vendors)
                             color="secondary"
                             size="small"
                             onClick={() => handleReinitiateClick(data)}
-                          >
+                          > 
                             <ReplayIcon />
                           </IconButton>
                         </Tooltip>

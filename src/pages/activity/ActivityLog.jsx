@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import Header from "../../components/Header";
-import {getActivities} from "../../services/admin/activiyLogService";
+import {getVmsActivityLogs} from "../../services/admin/activiyLogService";
 
 
 const ActivityLog = () => {
@@ -18,7 +18,7 @@ const ActivityLog = () => {
         const fetchLogs = async () => {
             setLoading(true);
             try {
-                const response = await getActivities(currentPage, logsPerPage, null, null, minDate, maxDate);
+                const response = await getVmsActivityLogs(currentPage, logsPerPage, null, null, minDate, maxDate);
                 const data = response.data;
 
                 if (data && Array.isArray(data.logs)) {
@@ -82,7 +82,7 @@ const ActivityLog = () => {
                         <tr>
                             <th className="text-center">Date Time</th>
                             <th className="text-center">Activity</th>
-                            <th className="text-center">Log</th>
+                            <th className="text-center">User</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -97,7 +97,7 @@ const ActivityLog = () => {
                                 <tr key={index}>
                                     <td>{new Date(entry.datetime).toLocaleString()}</td>
                                     <td>{entry.activity}</td>
-                                    <td>{entry.log}</td>
+                                    <td>{entry.username}</td>
                                 </tr>
                             ))
                         ) : (
