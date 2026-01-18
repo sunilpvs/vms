@@ -43,6 +43,7 @@ function VendorListTable({
   const navigate = useNavigate();
 
   // Re-initiate modal state
+   const [selectedEntity, setSelectedEntity] = useState("");
   const [openReinitiateModal, setOpenReinitiateModal] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
 
@@ -51,15 +52,39 @@ function VendorListTable({
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Search filter
+   const entityOptions = [
+  ...new Set(
+    Array.isArray(vendors)
+      ? vendors.map((v) => v.entity_name).filter(Boolean)
+      : []
+  ),
+];
+
 const filteredVendors = Array.isArray(vendors)
-  ? vendors.filter((vendor) =>
-      `${vendor.reference_id ?? ""} ${vendor.contact_person_name ?? ""}
-       ${vendor.contact_person_mobile ?? ""} ${vendor.entity_name ?? ""} ${vendor.status ?? ""}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
+  ? vendors.filter((vendor) => {
+      const searchText = `
+        ${vendor.reference_id ?? ""}
+        ${vendor.vendor_code ?? ""}
+        ${vendor.contact_person_name ?? ""}
+        ${vendor.contact_person_mobile ?? ""}
+        ${vendor.entity_name ?? ""}
+        ${vendor.expiry_date ?? ""}
+        ${vendor.status ?? ""}
+      `.toLowerCase();
+
+      const matchesSearch = searchText.includes(
+        searchTerm.toLowerCase()
+      );
+
+      const matchesEntity =
+        selectedEntity === "" ||
+        vendor.entity_name === selectedEntity;
+
+      return matchesSearch && matchesEntity;
+    })
   : [];
+
+
 
 
   // Pagination
@@ -171,31 +196,52 @@ const filteredVendors = Array.isArray(vendors)
 
       <div className="container mt-4 p-3 bg-white rounded shadow-sm">
         {/* Search & Limit */}
-        <div className="d-flex justify-content-between mb-3">
+       <div className="d-flex flex-wrap gap-2 mb-3">
           <input
             type="text"
             placeholder="Search..."
+            className="form-control"
+            style={{ maxWidth: 300 }}
             value={searchTerm}
-            onChange={(e) => onSearch(e.target.value)}
-            className="form-control w-50"
+            onChange={(e) => {
+              onSearch(e.target.value);
+              onPageChange(1);
+            }}
           />
 
           <select
-            className="form-select w-25"
-            value={itemsPerPage}
+            className="form-select"
+            style={{ maxWidth: 250 }}
+            value={selectedEntity}
             onChange={(e) => {
-              onLimitChange(parseInt(e.target.value, 10));
+              setSelectedEntity(e.target.value);
               onPageChange(1);
             }}
           >
-            {[5, 10, 20, 50].map((num) => (
-              <option key={num} value={num}>
-                {num}
+            <option value="">All Entities</option>
+            {entityOptions.map((entity) => (
+              <option key={entity} value={entity}>
+                {entity}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="form-select"
+            style={{ maxWidth: 150 }}
+            value={itemsPerPage}
+            onChange={(e) => {
+              onLimitChange(Number(e.target.value));
+              onPageChange(1);
+            }}
+          >
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
               </option>
             ))}
           </select>
         </div>
-
         {/* Table */}
         <div className="table-responsive">
           <table className="table table-bordered table-hover text-center align-middle">
@@ -419,6 +465,7 @@ const filteredVendors = Array.isArray(vendors)
 
 VendorListTable.propTypes = {
   Rfqs: PropTypes.array.isRequired,
+   vendors: PropTypes.array.isRequired,
   currentPage: PropTypes.number.isRequired,
   itemsPerPage: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired,
