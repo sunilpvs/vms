@@ -2119,251 +2119,267 @@ const RfqFormData = () => {
 
 
     // Step 5: Documents
-    const [documents, setDocuments] = useState({
-
-        pan: {},
-        msme: {},
-        gst: {},
-        cheque: {},
-        tds: {},
-        tds_declaration: "",
-        gst_available: "", // ✅ add this
-    });
-
-    const [documentStatus, setDocumentStatus] = useState({
-        gstin: "",
-        msme: "",
-        tds: "",
-    });
-
-    const handleDocumentStatusChange = (e) => {
-        const { name, value } = e.target;
-
-        setDocumentStatus((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-
-        // Clear file if "No" selected
-        if (value === "No") {
-            const field = name; // gstin / msme / tds
-            setDocuments((prev) => ({
-                ...prev,
-                [field]: null,
-            }));
-        }
-    };
-
-    useEffect(() => {
-        const fetchDocuments = async () => {
-            try {
-                const response = await getDocumentDetails(selectedReferenceId);
-                if (response?.data) {
-                    const docs = {};
-                    response.data.forEach(doc => {
-                        docs[doc?.doc_type] = {
-                            docId: doc?.doc_id,  // keep the document ID for updates
-                            file: null,          // user hasn't selected new file yet
-                            url: doc?.file_path  // stored file path
-                        };
-                    });
-                    setDocuments(prev => ({
-                        ...prev,
-                        ...docs
-                    }));
-                }
-            } catch (err) {
-                console.error("Failed to fetch documents", err);
-            }
-        };
-        fetchDocuments();
-    }, [selectedReferenceId]);
-
-
-    const handleSaveDocuments = async () => {
-        let errors = [];
-
-        // ---------------------------------------------
-        // 🔹 1. PAN — ALWAYS REQUIRED
-        // ---------------------------------------------
-        if (!documents.pan) {
-            errors.push("PAN document is required.");
-        }
-
-        // ---------------------------------------------
-        // 🔹 2. GST — Conditional
-        // ---------------------------------------------
-        if (!documents.gst_available) {
-            errors.push("Please select GSTIN Available (Yes/No).");
-        }
-
-        if (documents.gst_available === "true") {
-            if (!documents.gst) {
-                errors.push("GSTIN Certificate is required.");
-            }
-        }
-
-
-        if (msmeInfo.registered_under_msme === "true") {
-            if (!documents.msme) {
-                errors.push("MSME Certificate is required.");
-            }
-        }
-
-        // ---------------------------------------------
-        // 🔹 4. Cancelled Cheque — Optional
-        // (No validation required)
-        // ---------------------------------------------
-
-        // ---------------------------------------------
-        // 🔹 5. TAN Certificate / Exemption — REQUIRED
-        // ---------------------------------------------
-        if (!tanStatus) {
-            errors.push("Please select TAN status (Yes/No).");
-        }
-
-        if (tanStatus === "yes" && !documents.tanCertificate) {
-            errors.push("TAN Certificate is required.");
-        }
-
-        if (tanStatus === "no" && !documents.tanExemption) {
-            errors.push("TAN Exemption Certificate is required.");
-        }
-
-        // ---------------------------------------------
-        // 🔹 6. Registration Certificate — ALWAYS REQUIRED
-        // ---------------------------------------------
-        if (!documents.incorporation) {
-            errors.push("Registration Certificate is required.");
-        }
-
-        // ---------------------------------------------
-        // 🔹 7. TDS Declaration — Conditional
-        // ---------------------------------------------
-        if (!documents.tds_declaration) {
-            errors.push("Please select TDS Declaration (Yes/No).");
-        }
-
-        if (documents.tds_declaration === "true" && !documents.tds) {
-            errors.push("TDS Declaration document is required.");
-        }
-
-        // ---------------------------------------------
-        // 🔹 8. File Type + File Size Validation (5 MB)
-        // ---------------------------------------------
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        const allFiles = [
-            documents.pan,
-            documents.gst,
-            documents.msme,
-            documents.cheque,
-            documents.tanCertificate,
-            documents.tanExemption,
-            documents.incorporation,
-            documents.tds
-        ];
-
-        allFiles.forEach((fileObj) => {
-            if (fileObj?.file) {
-                const file = fileObj.file;
-
-                if (!allowedTypes.includes(file.type)) {
-                    errors.push(`Invalid file format: ${file.name}. Allowed formats are JPG, JPEG, PNG, PDF.`);
-                }
-
-                if (file.size > maxSize) {
-                    errors.push(`File too large: ${file.name}. Maximum allowed size is 5 MB.`);
-                }
-            }
-        });
-
-        // ---------------------------------------------
-        // ❗ Show Errors
-        // ---------------------------------------------
-        if (errors.length > 0) {
-            alert("Please correct the following:\n\n" + errors.join("\n"));
-            return;
-        }
-
-        // ---------------------------------------------
-        // SUCCESS → GO TO NEXT STEP
-        // ---------------------------------------------
-        nextPage();
-        try {
-            const formData = new FormData();
-            let hasAnyOperation = false;
-
-            // Process all document types in the documents state
-            Object.entries(documents).forEach(([docType, docData]) => {
-                if (!docData) return;
-
-                const { file, docId } = docData;
-
-                if (file && docId) {
-                    // CASE 1: Update existing document (has both file and docId)
-                    formData.append("doc_ids[]", docId);
-                    formData.append("doc_types[]", docType);
-                    formData.append("files[]", file);
-                    hasAnyOperation = true;
-                } else if (file && !docId) {
-                    // CASE 2: Add new document (has file but no docId)
-                    formData.append("doc_types[]", docType);
-                    formData.append("files[]", file);
-                    hasAnyOperation = true;
-                } else if (!file && docId) {
-                    // CASE 3: Delete existing document (has docId but no file)
-                    formData.append("doc_ids[]", docId);
-                    hasAnyOperation = true;
-                }
-                // CASE 4: No operation (no file, no docId) - skip
-            });
-
-            // Check if there are any operations to perform
-            if (!hasAnyOperation) {
-                toast.error("No document changes to save. Please continue.");
-                nextPage();
-                return;
-            }
-
-            console.log("Request FormData entries:");
-            for (let pair of formData.entries()) {
-                console.log(pair);
-            }
-
-            // Always use the same endpoint (addDocuments) as per updated API
-            const response = await addDocuments(selectedReferenceId, formData);
-
-            if (response?.data?.message?.includes("success") || response.status === 200) {
-                toast.success("Documents saved successfully!");
-
-                // 🔄 re-fetch updated documents with correct referenceId
-                const refreshed = await getDocumentDetails(selectedReferenceId);
-                if (refreshed?.data) {
-                    const updatedDocuments = {};
-                    refreshed.data.forEach(doc => {
-                        updatedDocuments[doc?.doc_type] = {
-                            file: null,
-                            url: doc?.file_path,
-                            docId: doc?.doc_id // Store the document ID for future updates
-                        };
-                    });
-                    setDocuments(prev => ({
-                        ...prev,
-                        ...updatedDocuments
-                    }));
-                }
-
-                nextPage();
-            } else {
-                throw new Error(response?.data?.error || "Unknown error");
-            }
-        } catch (err) {
-            console.error(err.response || err);
-            toast.error("Failed to upload documents. Please try again.");
-        }
-    };
+     const [documents, setDocuments] = useState({
+ 
+         pan: {},
+         msme: {},
+         gst: {},
+         cheque: {},
+         tds: {},
+         tds_declaration: "",
+         gst_available: "",
+         tanExemption: {},
+     });
+ 
+     const [documentStatus, setDocumentStatus] = useState({
+         gstin: "",
+         msme: "",
+         tds: "",
+     });
+ 
+     const handleDocumentStatusChange = (e) => {
+         const { name, value } = e.target;
+ 
+         setDocumentStatus((prev) => ({
+             ...prev,
+             [name]: value,
+         }));
+ 
+         // Clear file if "No" selected
+         if (value === "No") {
+             const field = name; // gstin / msme / tds
+             setDocuments((prev) => ({
+                 ...prev,
+                 [field]: null,
+             }));
+         }
+     };
+ 
+     useEffect(() => {
+         const fetchDocuments = async () => {
+             try {
+                 const response = await getDocumentDetails(selectedReferenceId);
+                 console.log("Fetched Documents:", response?.data);
+                 if (response?.data) {
+                     const docs = {};
+                     response.data.forEach(doc => {
+                         docs[doc?.doc_type] = {
+                             docId: doc?.doc_id,  // keep the document ID for updates
+                             file: null,          // user hasn't selected new file yet
+                             url: doc?.file_path  // stored file path
+                         };
+                     });
+ 
+                     // Extract dropdown values from fetched documents
+                     const updatedDocs = { ...docs };
+ 
+                     // Check if TDS document exists to pre-select dropdown
+                     if (docs?.tds) {
+                         updatedDocs.tds_declaration = "true";
+                     }
+ 
+                     // Check if GST document exists to pre-select dropdown
+                     if (docs?.gst) {
+                         updatedDocs.gst_available = "true";
+                     }
+ 
+                     setDocuments(prev => ({
+                         ...prev,
+                         ...updatedDocs
+                     }));
+                 }
+             } catch (err) {
+                 console.error("Failed to fetch documents", err);
+             }
+         };
+         fetchDocuments();
+     }, [selectedReferenceId]);
+ 
+ 
+     const handleSaveDocuments = async () => {
+         let errors = [];
+ 
+         // ---------------------------------------------
+         // 🔹 1. PAN — ALWAYS REQUIRED
+         // ---------------------------------------------
+         if (!documents.pan) {
+             errors.push("PAN document is required.");
+         }
+ 
+         // ---------------------------------------------
+         // 🔹 2. GST — Conditional
+         // ---------------------------------------------
+         if (!documents.gst_available) {
+             errors.push("Please select GSTIN Available (Yes/No).");
+         }
+ 
+         if (documents.gst_available === "true") {
+             if (!documents.gst) {
+                 errors.push("GSTIN Certificate is required.");
+             }
+         }
+ 
+ 
+         if (msmeInfo.registered_under_msme === "true") {
+             if (!documents.msme) {
+                 errors.push("MSME Certificate is required.");
+             }
+         }
+ 
+         // ---------------------------------------------
+         // 🔹 4. Cancelled Cheque — Optional
+         // (No validation required)
+         // ---------------------------------------------
+ 
+         // ---------------------------------------------
+         // 🔹 5. TAN Certificate / Exemption — REQUIRED
+         // ---------------------------------------------
+         if (!tanStatus) {
+             errors.push("Please select TAN status (Yes/No).");
+         }
+ 
+         if (tanStatus === "yes" && !documents.tanCertificate) {
+             errors.push("TAN Certificate is required.");
+         }
+ 
+         if (tanStatus === "no" && !documents.tanExemption) {
+             errors.push("TAN Exemption Certificate is required.");
+         }
+ 
+         // ---------------------------------------------
+         // 🔹 6. Registration Certificate — ALWAYS REQUIRED
+         // ---------------------------------------------
+         if (!documents.incorporation) {
+             errors.push("Registration Certificate is required.");
+         }
+ 
+         // ---------------------------------------------
+         // 🔹 7. TDS Declaration — Conditional
+         // ---------------------------------------------
+         if (!documents.tds_declaration) {
+             errors.push("Please select TDS Declaration (Yes/No).");
+         }
+ 
+         if (documents.tds_declaration === "true" && !documents.tds) {
+             errors.push("TDS Declaration document is required.");
+         }
+ 
+         // ---------------------------------------------
+         // 🔹 8. File Type + File Size Validation (5 MB)
+         // ---------------------------------------------
+         const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+         const maxSize = 5 * 1024 * 1024; // 5MB
+ 
+         const allFiles = [
+             documents.pan,
+             documents.gst,
+             documents.msme,
+             documents.cheque,
+             documents.tanCertificate,
+             documents.tanExemption,
+             documents.incorporation,
+             documents.tds
+         ];
+ 
+         allFiles.forEach((fileObj) => {
+             if (fileObj?.file) {
+                 const file = fileObj.file;
+ 
+                 if (!allowedTypes.includes(file.type)) {
+                     errors.push(`Invalid file format: ${file.name}. Allowed formats are JPG, JPEG, PNG, PDF.`);
+                 }
+ 
+                 if (file.size > maxSize) {
+                     errors.push(`File too large: ${file.name}. Maximum allowed size is 5 MB.`);
+                 }
+             }
+         });
+ 
+         // ---------------------------------------------
+         // ❗ Show Errors
+         // ---------------------------------------------
+         if (errors.length > 0) {
+             alert("Please correct the following:\n\n" + errors.join("\n"));
+             return;
+         }
+ 
+         // ---------------------------------------------
+         // SUCCESS → GO TO NEXT STEP
+         // ---------------------------------------------
+         nextPage();
+         try {
+             const formData = new FormData();
+             let hasAnyOperation = false;
+ 
+             // Process all document types in the documents state
+             Object.entries(documents).forEach(([docType, docData]) => {
+                 if (!docData) return;
+ 
+                 const { file, docId } = docData;
+ 
+                 if (file && docId) {
+                     // CASE 1: Update existing document (has both file and docId)
+                     formData.append("doc_ids[]", docId);
+                     formData.append("doc_types[]", docType);
+                     formData.append("files[]", file);
+                     hasAnyOperation = true;
+                 } else if (file && !docId) {
+                     // CASE 2: Add new document (has file but no docId)
+                     formData.append("doc_types[]", docType);
+                     formData.append("files[]", file);
+                     hasAnyOperation = true;
+                 } else if (!file && docId) {
+                     // CASE 3: Delete existing document (has docId but no file)
+                     formData.append("doc_ids[]", docId);
+                     hasAnyOperation = true;
+                 }
+                 // CASE 4: No operation (no file, no docId) - skip
+             });
+ 
+             // Check if there are any operations to perform
+             if (!hasAnyOperation) {
+                 toast.error("No document changes to save. Please continue.");
+                 nextPage();
+                 return;
+             }
+ 
+             console.log("Request FormData entries:");
+             for (let pair of formData.entries()) {
+                 console.log(pair);
+             }
+ 
+             // Always use the same endpoint (addDocuments) as per updated API
+             const response = await addDocuments(selectedReferenceId, formData);
+ 
+             if (response?.data?.message?.includes("success") || response.status === 200) {
+                 toast.success("Documents saved successfully!");
+ 
+                 // 🔄 re-fetch updated documents with correct referenceId
+                 const refreshed = await getDocumentDetails(selectedReferenceId);
+                 if (refreshed?.data) {
+                     const updatedDocuments = {};
+                     refreshed.data.forEach(doc => {
+                         updatedDocuments[doc?.doc_type] = {
+                             file: null,
+                             url: doc?.file_path,
+                             docId: doc?.doc_id // Store the document ID for future updates
+                         };
+                     });
+                     setDocuments(prev => ({
+                         ...prev,
+                         ...updatedDocuments
+                     }));
+                 }
+ 
+                 nextPage();
+             } else {
+                 throw new Error(response?.data?.error || "Unknown error");
+             }
+         } catch (err) {
+             console.error(err.response || err);
+             toast.error("Failed to upload documents. Please try again.");
+         }
+     };
 
 
     // Step 6: Declarations
@@ -2384,56 +2400,64 @@ const RfqFormData = () => {
  
     */
 
-    const [declarationInfo, setDeclarationInfo] = useState({
-        declaration_id: null,
-        primary_declarant_name: '',
-        primary_declarant_designation: '',
-        country_declarant_name: '',
-        country_declarant_designation: '',
-        country_name: '',
-        organisation_name: '',
-        place: '',
-        signed_date: '',
-        fileName: '',
-        signedFile: null,
-    });
-
-    const isEditing = !!declarationInfo.declaration_id; // or however you check for edit mode
-
-
-    useEffect(() => {
-        if (!selectedReferenceId) return;
-        const fetchDeclarations = async () => {
-            try {
-                const response = await getDeclarations(selectedReferenceId);
-                console.log("Fetched declarations:", response);
-
-                if (response?.data) {
-                    const declaration = response?.data;
-                    console.log("declaration:", declaration);
-
-
-                    setDeclarationInfo({
-                        declaration_id: declaration.declaration_id || null,
-                        primary_declarant_name: declaration.primary_declarant_name || '',
-                        primary_declarant_designation: declaration.primary_declarant_designation || '',
-                        country_declarant_name: declaration.country_declarant_name || '',
-                        country_declarant_designation: declaration.country_declarant_designation || '',
-                        country_name: declaration.country_name || '',
-                        organisation_name: declaration.organisation_name || '',
-                        signed_date: declaration.signed_date || '',
-                        place: declaration.place || '',
-                        signedFile: declaration.authorized_signatory || null,
-                        fileName: declaration.file_name,
-                    });
-                }
-            } catch (err) {
-                console.error("Failed to fetch documents", err);
-            }
-        };
-
-        fetchDeclarations();
-    }, [selectedReferenceId]);
+   const [declarationInfo, setDeclarationInfo] = useState({
+           declaration_id: null,
+           primary_declarant_name: '',
+           primary_declarant_designation: '',
+           country_declarant_name: '',
+           country_declarant_designation: '',
+           country_name: '',
+           organisation_name: '',
+           place: '',
+           signed_date: '',
+           fileName: '',
+           signedFile: null,
+       });
+   
+       const isEditing = !!declarationInfo.declaration_id; // or however you check for edit mode
+   
+   
+       useEffect(() => {
+           if (!selectedReferenceId) return;
+           const fetchDeclarations = async () => {
+               try {
+                   const response = await getDeclarations(selectedReferenceId);
+                   console.log("Fetched declarations:", response);
+   
+                   if (response?.data) {
+                       const declaration = response?.data;
+                       console.log("declaration:", declaration);
+   
+   
+                       setDeclarationInfo({
+                           declaration_id: declaration.declaration_id || null,
+                           primary_declarant_name: declaration.primary_declarant_name || '',
+                           primary_declarant_designation: declaration.primary_declarant_designation || '',
+                           country_declarant_name: declaration.country_declarant_name || '',
+                           country_declarant_designation: declaration.country_declarant_designation || '',
+                           country_name: declaration.country_name || '',
+                           organisation_name: declaration.organisation_name || '',
+                           signed_date: declaration.signed_date || '',
+                           place: declaration.place || '',
+                           signedFile: declaration.authorized_signatory || null,
+                           fileName: declaration.file_name,
+                       });
+   
+                       if (declaration.primary_declarant_name && declaration.organisation_name && declaration.primary_declarant_designation) {
+                           setIsDeclarationChecked(true);
+                       }
+   
+                       if (declaration.country_declarant_name && declaration.country_name && declaration.country_declarant_designation) {
+                           setIsCountryPartyChecked(true);
+                       }
+                   }
+               } catch (err) {
+                   console.error("Failed to fetch documents", err);
+               }
+           };
+   
+           fetchDeclarations();
+       }, [selectedReferenceId]);
 
 
 
@@ -4498,7 +4522,7 @@ const RfqFormData = () => {
 
 
                                 {/* STEP 4: Documents to be enclosed */}
-                                   {currentPage === 4 && (
+                                      {currentPage === 4 && (
                                     <div className={styles.page}>
                                         <h3>Documents to be enclosed</h3>
                                         <p
@@ -4545,7 +4569,7 @@ const RfqFormData = () => {
 
                                             <select
                                                 name="gst_available"
-                                                value={documents?.gst_available || ""}
+                                                value={documents.gst_available || ""}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
 
@@ -4779,7 +4803,7 @@ const RfqFormData = () => {
 
                                             <select
                                                 name="tds_declaration"
-                                                value={documents?.tds_declaration || ""}
+                                                value={documents.tds_declaration || ""}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
 
@@ -4838,7 +4862,7 @@ const RfqFormData = () => {
                                 )}
 
                                 {/* STEP 6: Declaration & Confidentiality */}
-                                {currentPage === 5 && (
+                              {currentPage === 5 && (
                                     <div className={styles.page}>
                                         <h3>Declaration and Acknowledgement</h3>
 
@@ -5005,7 +5029,6 @@ const RfqFormData = () => {
                                                     />
                                                 </div>
 
-
                                                 {/* Date (auto-filled with today's date, not editable) */}
                                                 <div className={styles.fieldRow}>
                                                     <label className={styles.fieldLabel}>Date</label>
@@ -5027,8 +5050,6 @@ const RfqFormData = () => {
                                                         (JPG, JPEG, PNG — white background only, max 1 MB)
                                                         <span className={styles.requiredSymbol}>*</span>
                                                     </label>
-
-
 
 
 
