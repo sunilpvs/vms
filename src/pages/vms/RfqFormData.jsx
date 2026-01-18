@@ -4498,7 +4498,7 @@ const RfqFormData = () => {
 
 
                                 {/* STEP 4: Documents to be enclosed */}
-                                {currentPage === 4 && (
+                                   {currentPage === 4 && (
                                     <div className={styles.page}>
                                         <h3>Documents to be enclosed</h3>
                                         <p
@@ -4515,7 +4515,7 @@ const RfqFormData = () => {
                                         {/* PAN */}
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>PAN <span className={styles.requiredSymbol}>*</span></label>
-                                         
+
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.pan?.fileName && (
@@ -4545,7 +4545,7 @@ const RfqFormData = () => {
 
                                             <select
                                                 name="gst_available"
-                                                value={documents.gst_available || ""}
+                                                value={documents?.gst_available || ""}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
 
@@ -4631,7 +4631,7 @@ const RfqFormData = () => {
                                                 <label className={styles.fieldLabel}>
                                                     Upload MSME<span className={styles.requiredSymbol}>*</span>
                                                 </label>
-                                               
+
                                                 {documents.msme?.fileName && (
                                                     <span className={styles.fileName}>📄 {documents.msme.fileName}</span>
                                                 )}
@@ -4660,7 +4660,6 @@ const RfqFormData = () => {
                                                 Cancelled Cheque Leaf
                                             </label>
 
-                                          
 
                                             {/* ✅ Show uploaded file name */}
                                             {documents.cheque?.fileName && (
@@ -4696,8 +4695,7 @@ const RfqFormData = () => {
                                                 <span className={styles.requiredSymbol}>*</span>
                                             </label>
 
-                                            {/* File Upload */}
-                                           
+
 
                                             {/* ============================ */}
                                             {/* TAN Certificate (Yes) */}
@@ -4755,7 +4753,7 @@ const RfqFormData = () => {
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>Registration Certificate <span className={styles.requiredSymbol}>*</span>
                                             </label>
-                                          
+
 
                                             {documents.incorporation?.fileName && (
                                                 <span className={styles.fileName}>📄 {documents.incorporation.fileName}</span>
@@ -4781,7 +4779,7 @@ const RfqFormData = () => {
 
                                             <select
                                                 name="tds_declaration"
-                                                value={documents.tds_declaration || ""}
+                                                value={documents?.tds_declaration || ""}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
 
@@ -4811,6 +4809,7 @@ const RfqFormData = () => {
                                                 <label className={styles.fieldLabel}>
                                                     Upload TDS Declaration <span className={styles.requiredSymbol}>*</span>
                                                 </label>
+
 
 
                                                 {/* File Name */}
@@ -5006,6 +5005,7 @@ const RfqFormData = () => {
                                                     />
                                                 </div>
 
+
                                                 {/* Date (auto-filled with today's date, not editable) */}
                                                 <div className={styles.fieldRow}>
                                                     <label className={styles.fieldLabel}>Date</label>
@@ -5028,7 +5028,9 @@ const RfqFormData = () => {
                                                         <span className={styles.requiredSymbol}>*</span>
                                                     </label>
 
-                                                
+
+
+
 
                                                     {/* File name */}
                                                     {declarationInfo?.signedFile && (
