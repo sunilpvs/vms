@@ -49,7 +49,7 @@ const VmsRequest = () => {
     const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
     const [isCountryPartyChecked, setIsCountryPartyChecked] = useState(false);
 
-    const [tanStatus, setTanStatus] = useState(""); // yes or no
+    
     const [sameAsRegistered, setSameAsRegistered] = useState(false);
     const [countryCode, setCountryCode] = useState("");
     const [pendingRfqs, setPendingRfps] = useState([]);
@@ -464,6 +464,7 @@ const VmsRequest = () => {
         full_registered_name: "",
         business_entity_type: "",
         reg_number: "",
+        tan_status: "",
         tan_number: "",
         trading_name: "",
         company_email: "",
@@ -523,11 +524,18 @@ const VmsRequest = () => {
                 const response = await getCompanyInfo(selectedReferenceId);
                 const data = response?.data?.counterparty;
                 if (!data) return;
+                console.log("Fetched company info:", data);
 
                 const normalized = {
                     full_registered_name: data.full_registered_name || "",
                     business_entity_type: data.business_entity_type || "",
                     reg_number: data.reg_number || "",
+                    tan_status:
+                        data.tan_status === 1 || data.tan_status === true || data.tan_status === "true"
+                            ? "true"
+                            : data.tan_status === 0 || data.tan_status === false || data.tan_status === "false"
+                                ? "false"
+                                : "",
                     tan_number: data.tan_number || "",
                     trading_name: data.trading_name || "",
                     company_email: data.company_email || "",
@@ -581,11 +589,6 @@ const VmsRequest = () => {
         if (!companyInfo.trading_name)
             errors.push("Trading Name is required");
 
-        if (!tanStatus)
-            errors.push("TAN availability selection is required");
-
-        if (tanStatus === "yes" && !companyInfo.tan_number)
-            errors.push("TAN Number is required");
 
         if (!companyInfo.telephone)
             errors.push("Telephone Number is required");
@@ -647,10 +650,15 @@ const VmsRequest = () => {
 
         // add if new else update
         try {
+            const payload = {
+                ...companyInfo,
+                tan_status: companyInfo.tan_status === "true"
+            };
+            
             const existingResponse = await getCompanyInfo(referenceId);
             if (existingResponse && existingResponse.status === 200 && existingResponse.data && Object.keys(existingResponse.data).length > 0) {
                 // Update existing
-                await updateCompanyInfo(referenceId, companyInfo);
+                await updateCompanyInfo(referenceId, payload);
                 toast.success("Company information updated successfully!");
                 nextPage();
             }
@@ -658,7 +666,12 @@ const VmsRequest = () => {
         } catch (error) {
             // Add new
             try {
-                await addCompanyInfo(referenceId, companyInfo);
+                const payload = {
+                    ...companyInfo,
+                    tan_status: companyInfo.tan_status === "true"
+                };
+                
+                await addCompanyInfo(referenceId, payload);
                 toast.success("Company information added successfully!");
                 nextPage();
             } catch (err) {
@@ -689,36 +702,11 @@ const VmsRequest = () => {
             showBasicFields: showBasicRegistrationField,
         });
 
-        // Reset / Nullify fields bas   ed on business entity type
-        setCompanyInfo((prev) => {
-            let updatedInfo = { ...prev };
-
-            // Case 1: Section 8 Company → registration number should be null
-            if (selectedEntityType === 'Section 8 Company') {
-                updatedInfo.registration_number = null;
-
-                updatedInfo.tan_number = null;
-            }
-
-
-            // Case 2: Entities that don't require CIN/TAN → set them to null
-            if (entitiesRequiringBasicRegistration.includes(selectedEntityType)) {
-                updatedInfo.cin_number = null;
-                updatedInfo.tan_number = null;
-            }
-
-            return updatedInfo;
-        });
+        // Note: Removed the logic that was nullifying tan_number and other fields
+        // as it was interfering with autofill from API responses.
+        // Field visibility is now controlled by conditional rendering in the UI.
     }, [companyInfo.business_entity_type]);
 
-
-    useEffect(() => {
-        if (companyInfo.tan_number && companyInfo.tan_number !== "") {
-            setTanStatus("yes");
-        } else {
-            setTanStatus("no");
-        }
-    }, [companyInfo.tan_number]);
 
 
     // auto select the checkbox if registered address and business address are same
@@ -2222,18 +2210,7 @@ const VmsRequest = () => {
         // ---------------------------------------------
         // 🔹 5. TAN Certificate / Exemption — REQUIRED
         // ---------------------------------------------
-        if (!tanStatus) {
-            errors.push("Please select TAN status (Yes/No).");
-        }
-
-        if (tanStatus === "yes" && !documents.tanCertificate) {
-            errors.push("TAN Certificate is required.");
-        }
-
-        if (tanStatus === "no" && !documents.tanExemption) {
-            errors.push("TAN Exemption Certificate is required.");
-        }
-
+        
         // ---------------------------------------------
         // 🔹 6. Registration Certificate — ALWAYS REQUIRED
         // ---------------------------------------------
@@ -3049,33 +3026,27 @@ const VmsRequest = () => {
                                             </label>
 
                                             <select
-                                                name="tanStatus"
-                                                value={tanStatus}
+                                                name="tan_status"
+                                                value={companyInfo.tan_status || ""}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
-                                                    setTanStatus(value);
-
-                                                    // Clear TAN number whenever user selects: no OR blank option
-                                                    if (value === "no" || value === "") {
-                                                        setCompanyInfo(prev => ({
-                                                            ...prev,
-                                                            tan_number: ""
-                                                        }));
-                                                    }
+                                                    setCompanyInfo((prev) => ({
+                                                        ...prev,
+                                                        tan_status: value,
+                                                    }));
                                                 }}
                                                 className={styles.fieldInput}
                                                 required
                                                 disabled
-
                                             >
                                                 <option value="">-- Select --</option>
-                                                <option value="yes">Yes</option>
-                                                <option value="no">No</option>
+                                                <option value="true">Yes</option>
+                                                <option value="false">No</option>
                                             </select>
                                         </div>
 
                                         {/* ✅ If YES → TAN Number input */}
-                                        {tanStatus === "yes" && (
+                                        {companyInfo.tan_status === "true"  && (
                                             <div className={styles.fieldRow}>
                                                 <label className={styles.fieldLabel}>
                                                     TAN Number
@@ -3090,20 +3061,21 @@ const VmsRequest = () => {
                                                     placeholder="Enter TAN Number"
                                                     required
                                                     readOnly
-
                                                 />
 
 
                                             </div>
                                         )}
 
-                                        {tanStatus === "no" && (
+                                        {companyInfo.tan_status === "false" && (
                                             <div className={styles.fieldRow}>
                                                 <p style={{ color: "red", fontWeight: "500", margin: 0, paddingLeft: "300px", }}>
                                                     ( Please upload your <strong>TDS Exemption Certificate</strong> in Step 5.)
                                                 </p>
                                             </div>
                                         )}
+
+
 
 
                                         <div className={styles.fieldRow}>
@@ -4712,9 +4684,9 @@ const VmsRequest = () => {
                                         {/* 🧾 TAN Certificate / TAN Exemption Certificate */}
                                         <div className={styles.fieldRow}>
                                             <label className={styles.fieldLabel}>
-                                                {tanStatus === "yes"
+                                                {companyInfo.tan_status === "true"
                                                     ? "Upload TAN Certificate"
-                                                    : tanStatus === "no"
+                                                    : companyInfo.tan_status === "false"
                                                         ? "Upload TAN Exemption Certificate"
                                                         : "TAN Certificate / Exemption Certificate"}
                                                 <span className={styles.requiredSymbol}>*</span>
@@ -4725,14 +4697,14 @@ const VmsRequest = () => {
                                             {/* ============================ */}
                                             {/* TAN Certificate (Yes) */}
                                             {/* ============================ */}
-                                            {tanStatus === "yes" && documents.tanCertificate?.fileName && (
+                                            {companyInfo.tan_status === "true" && documents.tanCertificate?.fileName && (
                                                 <span className={styles.fileName}>
                                                     📄 {documents.tanCertificate.fileName}
                                                 </span>
                                             )}
 
                                             {/* View Button */}
-                                            {tanStatus === "yes" && documents.tanCertificate?.url && (
+                                            {companyInfo.tan_status === "true" && documents.tanCertificate?.url && (
                                                 <a
                                                     href={
                                                         documents.tanCertificate.url.startsWith("blob:")
@@ -4750,13 +4722,13 @@ const VmsRequest = () => {
                                             {/* ============================ */}
                                             {/* TAN Exemption (No) */}
                                             {/* ============================ */}
-                                            {tanStatus === "no" && documents.tanExemption?.fileName && (
+                                            {companyInfo.tan_status === "false" && documents.tanExemption?.fileName && (
                                                 <span className={styles.fileName}>
                                                     📄 {documents.tanExemption.fileName}
                                                 </span>
                                             )}
 
-                                            {tanStatus === "no" && documents.tanExemption?.url && (
+                                            {companyInfo.tan_status === "false" && documents.tanExemption?.url && (
                                                 <a
                                                     href={
                                                         documents.tanExemption.url.startsWith("blob:")
