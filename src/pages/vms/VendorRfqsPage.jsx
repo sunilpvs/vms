@@ -80,7 +80,15 @@ function VendorRfqPage() {
 
   // ================= SEARCH =================
   const filteredRfqs = rfqs.filter((r) =>
-    `${r.reference_id} ${r.vendor_name} ${r.email} ${r.mobile} ${r.entity} ${r.status_name}`
+    `${r.reference_id}
+     ${r.full_registered_name} 
+     ${r.vendor_name} 
+     ${r.email} 
+     ${r.mobile} 
+     ${r.contact_person_name} 
+     ${r.contact_person_mobile}
+     ${r.expiry_date}
+     ${r.status}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
@@ -197,14 +205,14 @@ function VendorRfqPage() {
                         <></>
                       ) : (
                         <Tooltip title="View Details">
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => navigate(`/rfqs/${r.reference_id}`)}
-                        >
-                          <VisibilityIcon />
-                        </IconButton>
-                      </Tooltip>
+                          <IconButton
+                            color="primary"
+                            size="small"
+                            onClick={() => navigate(`/rfqs/${r.reference_id}`)}
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
                       )}
 
                       {r.status_id === 8 || r.status_id === 9 ? (
@@ -242,8 +250,8 @@ function VendorRfqPage() {
               <button
                 key={i}
                 className={`btn btn-sm me-1 ${currentPage === i + 1
-                    ? "btn-primary"
-                    : "btn-outline-secondary"
+                  ? "btn-primary"
+                  : "btn-outline-secondary"
                   }`}
                 onClick={() => goToPage(i + 1)}
               >

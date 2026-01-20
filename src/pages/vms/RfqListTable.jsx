@@ -2,6 +2,7 @@ import { useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
 import Header from "../../components/Header";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import data from "bootstrap/js/src/dom/data";
 
@@ -21,12 +22,41 @@ function RfqTable({
   const navigate = useNavigate();
   const reviewRfqStatuses = [];
 
-  // Filter Rfqs based on search term
-  const filteredRfqs = Rfqs.filter((rfq) =>
-    `${rfq.reference_id} ${rfq.vendor_name} ${rfq.contact_name} ${rfq.email} ${rfq.mobile} ${rfq.entity} ${rfq.status}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+    /* ================= ENTITY FILTER STATE ================= */
+   const [selectedEntity, setSelectedEntity] = useState("");
+
+  /* ================= UNIQUE ENTITY LIST ================= */
+  const entityOptions = [
+    ...new Set(
+      Array.isArray(Rfqs)
+        ? Rfqs.map((rfq) => rfq.entity).filter(Boolean)
+        : []
+    ),
+  ];
+
+  /* ================= FILTER LOGIC ================= */
+  const filteredRfqs = Array.isArray(Rfqs)
+    ? Rfqs.filter((rfq) => {
+        const searchText = `
+          ${rfq.reference_id ?? ""}
+          ${rfq.vendor_name ?? ""}
+          ${rfq.contact_name ?? ""}
+          ${rfq.email ?? ""}
+          ${rfq.mobile ?? ""}
+          ${rfq.entity ?? ""}
+          ${rfq.status_name ?? ""}
+        `.toLowerCase();
+
+        const matchesSearch = searchText.includes(
+          searchTerm.toLowerCase()
+        );
+
+        const matchesEntity =
+          selectedEntity === "" || rfq.entity === selectedEntity;
+
+        return matchesSearch && matchesEntity;
+      })
+    : [];
 
   // Pagination after filtering
   const totalPages = Math.ceil(filteredRfqs.length / itemsPerPage);
@@ -45,39 +75,58 @@ function RfqTable({
 
       <div className="container mt-4 p-3 bg-white rounded shadow-sm">
         {/* Search and Items Per Page Controls */}
-        <div className="d-flex align-items-center justify-content-between flex-wrap mb-3">
-          <div className="me-3 mb-2" style={{ flex: 1, minWidth: "200px" }}>
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => onSearch(e.target.value)}
-              className="form-control"
-            />
-          </div>
+        <div className="d-flex flex-wrap gap-2 mb-3">
+        
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => {
+              onSearch(e.target.value);
+              onPageChange(1);
+            }}
+            className="form-control"
+            style={{ maxWidth: "300px" }}
+          />
 
-          <div className="d-flex align-items-center mb-2">
-            <label htmlFor="limitSelect" className="form-label me-2 mb-0 text-body">
-              Items per page:
-            </label>
-            <select
-              id="limitSelect"
-              className="form-select"
-              style={{ width: "250px" }}
-              value={itemsPerPage}
-              onChange={(e) => {
-                onLimitChange(parseInt(e.target.value, 10));
-                onPageChange(1); // Reset to page 1
-              }}
-            >
-              {[5, 10, 20, 50].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Entity Filter */}
+          <select
+            className="form-select"
+            style={{ maxWidth: "250px" }}
+            value={selectedEntity}
+            onChange={(e) => {
+              setSelectedEntity(e.target.value);
+              onPageChange(1);
+            }}
+          >
+            <option value="">All Entities</option>
+            {entityOptions.map((entity) => (
+              <option key={entity} value={entity}>
+                {entity}
+              </option>
+            ))}
+          </select>
+
+          {/* Items per page */}
+          <select
+            className="form-select"
+            style={{ maxWidth: "200px" }}
+            value={itemsPerPage}
+            onChange={(e) => {
+              onLimitChange(parseInt(e.target.value, 10));
+              onPageChange(1);
+            }}
+          >
+            {[5, 10, 20, 50].map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
         </div>
+
+     
 
         {/* Table */}
         <div className="table-responsive">
