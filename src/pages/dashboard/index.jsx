@@ -11,6 +11,7 @@ import Header from "../../components/Header";
 import StatBox from "../../components/StatBox";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getSubmittedRfqCount, getActiveVendorCount } from "../../services/vms/dashboardCountService";
 
 // Icons
 import TrafficIcon from "@mui/icons-material/Traffic";
@@ -24,8 +25,25 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const [entityCount, setEntityCount] = useState(0);
-  const [pendingAccessCount, setPendingAccessCount] = useState(0);
-  const [AccessCount, SetAccessCount] = useState(0);
+  const [submittedRfqCount, setSubmittedRfqCount] = useState(0);
+  const [activeVendorCount, setActiveVendorCount] = useState(0);
+
+  useEffect(() => {
+    const response = async () => {
+      try {
+        const rfqCountResponse = await getSubmittedRfqCount();
+        const activeVendorCountResponse = await getActiveVendorCount();
+        setSubmittedRfqCount(rfqCountResponse.data.submitted_count || 0);
+        setActiveVendorCount(activeVendorCountResponse.data.active_vendor_count || 0);
+      }
+      catch (error) {
+        console.error("Error fetching submitted RFQ count:", error);
+      }
+    };
+    response();
+  }, []);
+
+
 
   return (
     <Box m="20px">
@@ -53,8 +71,8 @@ const Dashboard = () => {
             borderRadius="16px"
           >
             <StatBox
-              title={String(pendingAccessCount ?? 0)}
-              subtitle="Pending Access Requests"
+              title={String(submittedRfqCount ?? 0)}
+              subtitle="Pending RFQ Requests"
               icon={
                 <VpnKeyOutlinedIcon
                   sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -75,7 +93,7 @@ const Dashboard = () => {
             borderRadius="16px"
           >
             <StatBox
-              title={String(AccessCount ?? 0)}
+              title={String(activeVendorCount ?? 0)}
               subtitle="Active Vendor Count"
               icon={
                 <GroupOutlinedIcon

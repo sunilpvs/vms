@@ -31,9 +31,6 @@ export const getEntitiesCount = () => {
     return axiosInstance.get(`api/admin/entity?type=count`);
 };
 
-export const getPendingAccessRequestsCount = () => {
-  return axiosInstance.get('api/admin/access-request?type=pending_count');
-};
 
 export const getAllAccessRequests = () => {
   return axiosInstance.get('api/admin/access-request?type=req_count');
