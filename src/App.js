@@ -32,6 +32,7 @@ import VmsRequest from "./pages/vms/VmsRequest";
 import CreateRfq from "./pages/vms/CreateRfq";
 import RfqFormData from "./pages/vms/RfqFormData";
 import VendorRfqPage from "./pages/vms/VendorRfqsPage";
+import NotFound404 from "./pages/error/404NotFound";
 
 
 const App = () => {
@@ -88,7 +89,7 @@ const AppRoutes = () => (
         </Route>
 
         {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/login" replace={true} />} />
+        <Route path="*" element={<NotFound404 />} />
     </Routes>
 );
 

@@ -130,9 +130,9 @@ const Dashboard = () => {
             route: "/vendor-list",
           },
           {
-            title: "All RFI List",
+            title: "Vendor RFI List",
             desc: "View all Request For Quotation submissions and their statuses.",
-            route: "/all-rfq-list",
+            route: "/vendor-rfqs",
           },
           {
             title: "Reports --> Under Development",
