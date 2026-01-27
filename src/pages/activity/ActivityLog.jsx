@@ -97,7 +97,7 @@ const ActivityLog = () => {
                                 <tr key={index}>
                                     <td>{new Date(entry.datetime).toLocaleString()}</td>
                                     <td>{entry.activity}</td>
-                                    <td>{entry.log}</td>
+                                    <td>{entry.username}</td>
                                 </tr>
                             ))
                         ) : (
