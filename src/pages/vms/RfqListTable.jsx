@@ -4,14 +4,12 @@ import { Box } from "@mui/material";
 import Header from "../../components/Header";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import data from "bootstrap/js/src/dom/data";
+
 
 function RfqTable({
   Rfqs,
-  deleteRfq,
-  editRfq,
+  userRole,
   currentPage,
-  total,
   itemsPerPage,
   onPageChange,
   onLimitChange,
@@ -170,18 +168,22 @@ function RfqTable({
                         </button>
                       )}
 
-                      {data.status === 8 || data.status === 9 ? (
+                      { (userRole === 6 && data.status === 8) || (userRole === 7 && data.status === 9) ? (
                         <button
                           className="btn btn-sm btn-primary ms-3 mt-2"
                           onClick={() => navigate(`/review-vendor/${data.reference_id}`)}
                         >
                           Review
                         </button>
-                      ) : data.status === 7 || data.status === 10 ? (
+                      ) :  userRole === 7 && data.status === 8 ? (
+                        <span className="text-muted">Not Verified</span> 
+                      ) :
+                       userRole === 6 || userRole === 7 || data.status === 7 || data.status === 10 ? (
                         <span className="text-muted">Not Submitted</span>
                       ) : (
                         <div></div>
-                      )}
+                      )
+                    }
 
                     </td>
                   </tr>
@@ -231,6 +233,7 @@ function RfqTable({
 
 RfqTable.propTypes = {
   Rfqs: PropTypes.array.isRequired,
+  userRole: PropTypes.string.isRequired,
   currentPage: PropTypes.number.isRequired,
   total: PropTypes.number,
   itemsPerPage: PropTypes.number.isRequired,
