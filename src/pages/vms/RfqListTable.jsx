@@ -20,8 +20,8 @@ function RfqTable({
   const navigate = useNavigate();
   const reviewRfqStatuses = [];
 
-    /* ================= ENTITY FILTER STATE ================= */
-   const [selectedEntity, setSelectedEntity] = useState("");
+  /* ================= ENTITY FILTER STATE ================= */
+  const [selectedEntity, setSelectedEntity] = useState("");
 
   /* ================= UNIQUE ENTITY LIST ================= */
   const entityOptions = [
@@ -35,7 +35,7 @@ function RfqTable({
   /* ================= FILTER LOGIC ================= */
   const filteredRfqs = Array.isArray(Rfqs)
     ? Rfqs.filter((rfq) => {
-        const searchText = `
+      const searchText = `
           ${rfq.reference_id ?? ""}
           ${rfq.vendor_name ?? ""}
           ${rfq.contact_name ?? ""}
@@ -45,15 +45,15 @@ function RfqTable({
           ${rfq.status_name ?? ""}
         `.toLowerCase();
 
-        const matchesSearch = searchText.includes(
-          searchTerm.toLowerCase()
-        );
+      const matchesSearch = searchText.includes(
+        searchTerm.toLowerCase()
+      );
 
-        const matchesEntity =
-          selectedEntity === "" || rfq.entity === selectedEntity;
+      const matchesEntity =
+        selectedEntity === "" || rfq.entity === selectedEntity;
 
-        return matchesSearch && matchesEntity;
-      })
+      return matchesSearch && matchesEntity;
+    })
     : [];
 
   // Pagination after filtering
@@ -74,7 +74,7 @@ function RfqTable({
       <div className="container mt-4 p-3 bg-white rounded shadow-sm">
         {/* Search and Items Per Page Controls */}
         <div className="d-flex flex-wrap gap-2 mb-3">
-        
+
           {/* Search */}
           <input
             type="text"
@@ -124,7 +124,7 @@ function RfqTable({
           </select>
         </div>
 
-     
+
 
         {/* Table */}
         <div className="table-responsive">
@@ -168,22 +168,36 @@ function RfqTable({
                         </button>
                       )}
 
-                      { (userRole === 6 && data.status === 8) || (userRole === 7 && data.status === 9) ? (
+                      {userRole === 6 && data.status === 8 && (
                         <button
                           className="btn btn-sm btn-primary ms-3 mt-2"
                           onClick={() => navigate(`/review-vendor/${data.reference_id}`)}
                         >
-                          Review
+                          Verify
                         </button>
-                      ) :  userRole === 7 && data.status === 8 ? (
-                        <span className="text-muted">Not Verified</span> 
-                      ) :
-                       userRole === 6 || userRole === 7 || data.status === 7 || data.status === 10 ? (
+                      )}
+
+                      {userRole === 7 && data.status === 9 && (
+                        <button
+                          className="btn btn-sm btn-primary ms-3 mt-2"
+                          onClick={() => navigate(`/review-vendor/${data.reference_id}`)}
+                        >
+                          Approve
+                        </button>
+                      )}
+
+                      {userRole === 7 && data.status === 8 && (
+                        <span className="text-muted">Waiting for Verification</span>
+                      )}
+
+                      {data.status === 7 && (
                         <span className="text-muted">Not Submitted</span>
-                      ) : (
-                        <div></div>
-                      )
-                    }
+                      )}
+
+                      {data.status === 11 && (
+                        <span className="text-muted">Approved</span>
+                      )}
+
 
                     </td>
                   </tr>
