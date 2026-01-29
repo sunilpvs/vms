@@ -85,7 +85,7 @@ const RfqFormData = () => {
             }
         };
         fetchPendingRfqs();
-    }, [selectedReferenceId]);
+    }, []);
 
 
     const getCountries = async () => {
@@ -530,6 +530,12 @@ const RfqFormData = () => {
                     full_registered_name: data.full_registered_name || "",
                     business_entity_type: data.business_entity_type || "",
                     reg_number: data.reg_number || "",
+                       tan_status:
+                        data.tan_status === 1 || data.tan_status === true || data.tan_status === "true"
+                            ? "true"
+                            : data.tan_status === 0 || data.tan_status === false || data.tan_status === "false"
+                                ? "false"
+                                : "",
                     tan_number: data.tan_number || "",
                     trading_name: data.trading_name || "",
                     company_email: data.company_email || "",
@@ -3101,7 +3107,7 @@ const RfqFormData = () => {
                                         {tanStatus === "no" && (
                                             <div className={styles.fieldRow}>
                                                 <p style={{ color: "red", fontWeight: "500", margin: 0, paddingLeft: "300px", }}>
-                                                    ( Please upload your <strong>TDS Exemption Certificate</strong> in Step 5.)
+                                                    ( <strong>TDS Exemption Certificate</strong> uploaded in Step 5.)
                                                 </p>
                                             </div>
                                         )}

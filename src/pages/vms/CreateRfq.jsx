@@ -6,8 +6,10 @@ import { toast } from "react-hot-toast";
 
 const CreateRfq = () => {
     const [submitted, setSubmitted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (formData) => {
+        setIsLoading(true);
         try {
             const res = await addRfq(formData);
             if (res?.data?.error) {
@@ -19,6 +21,8 @@ const CreateRfq = () => {
         } catch (err) {
             toast.error(err.response?.data?.error || "Something went wrong");
             console.error("Submit failed:", err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -32,7 +36,7 @@ const CreateRfq = () => {
                 <div className="col-md-8">
                     <h3 className="mb-4">Initiate RFI</h3>
                     {!submitted ? (
-                        <CreateRfqForm onSubmit={handleSubmit} />
+                        <CreateRfqForm onSubmit={handleSubmit} isLoading={isLoading} />
                     ) : (
                         <div className="alert alert-success">
                             Vendor successfully submitted.

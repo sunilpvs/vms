@@ -2588,7 +2588,7 @@ const VmsRequest = () => {
                 if (!expiryDate) {
                     toast.error("Please select expiry date.");
                     setIsLoading(false);
-                    return; 
+                    return;
                 }
                 const response = await handleVerifyRfq();
                 if (response === true) {
@@ -2598,7 +2598,6 @@ const VmsRequest = () => {
                     toast.error("Failed to verify vendor.");
                     setSelectedReferenceId("");
                 }
-                navigate('/rfq-list')
             }
 
             else if (actionType === "approve") {
@@ -2611,7 +2610,6 @@ const VmsRequest = () => {
                 if (response === "approve success") {
                     toast.success(`Vendor approved successfully till ${expiryDate}`);
                     setSelectedReferenceId("");
-                    navigate('/rfq-list')
                 } else if (response === "verify before approve") {
                     toast.error("Please verify the vendor before approving.");
                     setSelectedReferenceId("");
@@ -2622,7 +2620,6 @@ const VmsRequest = () => {
                     toast.error("Error while approving vendor.");
                     setSelectedReferenceId("");
                 }
-                navigate('/rfq-list')
             }
 
             else if (actionType === "reject") {
@@ -2634,7 +2631,6 @@ const VmsRequest = () => {
                     toast.error("Failed to reject vendor request.");
                     setSelectedReferenceId("");
                 }
-                navigate('/rfq-list')
             }
 
             else if (actionType === "sendBack") {
@@ -2645,7 +2641,6 @@ const VmsRequest = () => {
                 } else {
                     toast.error("Failed to send back vendor request.");
                 }
-                navigate('/rfq-list')
             }
 
             // ✅ reset after success
@@ -3075,7 +3070,7 @@ const VmsRequest = () => {
                                         {companyInfo.tan_status === "false" && (
                                             <div className={styles.fieldRow}>
                                                 <p style={{ color: "red", fontWeight: "500", margin: 0, paddingLeft: "300px", }}>
-                                                    ( Please upload your <strong>TDS Exemption Certificate</strong> in Step 5.)
+                                                    ( <strong>TDS Exemption Certificate</strong> uploaded in Step 5.)
                                                 </p>
                                             </div>
                                         )}

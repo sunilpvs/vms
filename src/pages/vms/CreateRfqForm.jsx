@@ -4,7 +4,7 @@ import { getEntityCombo } from "../../services/admin/entityService"; // replace 
 import styles from "./vms.module.css";
 import { getStatusByModule } from "../../services/admin/statusService";
 
-const CreateRfqForm = ({ onSubmit }) => {
+const CreateRfqForm = ({ onSubmit, isLoading }) => {
     const [formData, setFormData] = useState({
         vendor_name: "",
         contact_name: "",
@@ -132,8 +132,19 @@ const CreateRfqForm = ({ onSubmit }) => {
             </div>
 
             <div className="text-end">
-                <button type="submit" className="btn btn-primary">
-                    Submit Vendor
+                <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                            <span
+                                className="spinner-border spinner-border-sm me-2"
+                                role="status"
+                                aria-hidden="true"
+                            ></span>
+                            Processing...
+                        </>
+                    ) : (
+                        "Submit"
+                    )}
                 </button>
             </div>
         </form>
