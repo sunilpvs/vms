@@ -157,48 +157,48 @@ function RfqTable({
                     <td>{data.entity}</td>
                     <td>{data.status_name}</td>
                     <td>
-                      {data.status === 7 ? (
-                        <> </>
-                      ) : (
-                        <button
-                          className="btn btn-sm btn-primary ms-3 mt-2"
-                          onClick={() => navigate(`/rfqs/${data.reference_id}`)}
-                        >
-                          View Details
-                        </button>
-                      )}
+                      <div className="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                        {data.status === 7 ? (
+                          <></>
+                        ) : (
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() => navigate(`/rfqs/${data.reference_id}`)}
+                          >
+                            View Details
+                          </button>
+                        )}
 
-                      {userRole === 6 && data.status === 8 && (
-                        <button
-                          className="btn btn-sm btn-primary ms-3 mt-2"
-                          onClick={() => navigate(`/review-vendor/${data.reference_id}`)}
-                        >
-                          Verify
-                        </button>
-                      )}
+                        {userRole === 6 && data.status === 8 && (
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() => navigate(`/review-vendor/${data.reference_id}`)}
+                          >
+                            Verify
+                          </button>
+                        )}
 
-                      {userRole === 7 && data.status === 9 && (
-                        <button
-                          className="btn btn-sm btn-primary ms-3 mt-2"
-                          onClick={() => navigate(`/review-vendor/${data.reference_id}`)}
-                        >
-                          Approve
-                        </button>
-                      )}
+                        {userRole === 7 && data.status === 9 && (
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() => navigate(`/review-vendor/${data.reference_id}`)}
+                          >
+                            Approve
+                          </button>
+                        )}
 
-                      {userRole === 7 && data.status === 8 && (
-                        <span className="text-muted">Waiting for Verification</span>
-                      )}
+                        {userRole === 7 && data.status === 8 && (
+                          <span className="text-muted">Not Verified</span>
+                        )}
 
-                      {data.status === 7 && (
-                        <span className="text-muted">Not Submitted</span>
-                      )}
+                        {data.status === 7 && (
+                          <span className="text-muted">Not Submitted</span>
+                        )}
 
-                      {data.status === 11 && (
-                        <span className="text-muted">Approved</span>
-                      )}
-
-
+                        {data.status === 11 && (
+                          <span className="text-muted">Approved</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
