@@ -7,8 +7,12 @@ export const getAllRfqList = () => {
 };
 
 // Get vendor combo list (optional fields can be passed)
-export const getPendingRfqList = () => {
-    return axiosInstance.get(`api/vms/vendor-initiate?type=pending-rfqs`);
+export const getPendingSubmittedRfqList = () => {
+    return axiosInstance.get(`api/vms/vendor-initiate?type=pending-rfqs&status=submitted`);
+};
+
+export const getPendingVerifiedRfqList = () => {
+    return axiosInstance.get(`api/vms/vendor-initiate?type=pending-rfqs&status=verified`);
 };
 
 // Get all vendors list

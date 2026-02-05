@@ -43,25 +43,26 @@ function VendorListTable({
   const navigate = useNavigate();
 
   // Re-initiate modal state
-   const [selectedEntity, setSelectedEntity] = useState("");
+  const [selectedEntity, setSelectedEntity] = useState("");
   const [openReinitiateModal, setOpenReinitiateModal] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [isReinitiating, setIsReinitiating] = useState(false);
 
   // Edit modal state
   const [openEditModal, setOpenEditModal] = useState(false);
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-   const entityOptions = [
-  ...new Set(
-    Array.isArray(vendors)
-      ? vendors.map((v) => v.entity_name).filter(Boolean)
-      : []
-  ),
-];
+  const entityOptions = [
+    ...new Set(
+      Array.isArray(vendors)
+        ? vendors.map((v) => v.entity_name).filter(Boolean)
+        : []
+    ),
+  ];
 
-const filteredVendors = Array.isArray(vendors)
-  ? vendors.filter((vendor) => {
+  const filteredVendors = Array.isArray(vendors)
+    ? vendors.filter((vendor) => {
       const searchText = `
         ${vendor.reference_id ?? ""}
         ${vendor.vendor_code ?? ""}
@@ -82,7 +83,7 @@ const filteredVendors = Array.isArray(vendors)
 
       return matchesSearch && matchesEntity;
     })
-  : [];
+    : [];
 
 
 
@@ -106,23 +107,26 @@ const filteredVendors = Array.isArray(vendors)
   const handleReinitiateClick = (vendor) => {
     // console the difference in days
     console.log("Days to expiry:", (new Date(vendor.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
-    setSelectedVendor(vendor); 
+    setSelectedVendor(vendor);
     setOpenReinitiateModal(true);
   };
 
   const handleReinitiateSubmit = async () => {
     console.log("Re-initiated vendor:", selectedVendor);
-    try{
+    try {
+      setIsReinitiating(true);
       await reinitiateVendor(selectedVendor.vendor_code, {});
       toast.success("Vendor re-initiated successfully");
     }
-    catch(err){
+    catch (err) {
       console.error("Re-initiate failed", err);
       toast.error(err?.response?.data?.error || "Failed to re-initiate vendor");
     }
-
-    setOpenReinitiateModal(false);
-    await onRefresh(currentPage, itemsPerPage);
+    finally {
+      setIsReinitiating(false);
+      setOpenReinitiateModal(false);
+      await onRefresh(currentPage, itemsPerPage);
+    }
   };
 
 
@@ -158,6 +162,7 @@ const filteredVendors = Array.isArray(vendors)
     if (!selectedVendor || !status) return;
     const vendorCode = selectedVendor.vendor_code;
 
+
     try {
       setIsSubmitting(true);
       let action = status.toLowerCase();
@@ -173,7 +178,7 @@ const filteredVendors = Array.isArray(vendors)
       } else if (action === "activate") {
         await activateVendor(vendorCode);
         toast.success("Vendor activated successfully");
-        
+
       } else {
         toast.error("Invalid action selected");
         return;
@@ -196,7 +201,7 @@ const filteredVendors = Array.isArray(vendors)
 
       <div className="container mt-4 p-3 bg-white rounded shadow-sm">
         {/* Search & Limit */}
-       <div className="d-flex flex-wrap gap-2 mb-3">
+        <div className="d-flex flex-wrap gap-2 mb-3">
           <input
             type="text"
             placeholder="Search..."
@@ -261,7 +266,7 @@ const filteredVendors = Array.isArray(vendors)
             <tbody>
               {paginatedVendors.length === 0 ? (
                 <tr>
-                  <td colSpan="7">No records found</td>
+                  <td colSpan="8">No records found</td>
                 </tr>
               ) : (
                 paginatedVendors.map((data) => (
@@ -279,28 +284,30 @@ const filteredVendors = Array.isArray(vendors)
                         <IconButton
                           color="primary"
                           size="small"
-                         onClick={() => {
-                           navigate(`/vendor-rfqs/${encodeURIComponent(data.vendor_code)}`);
-                         }}
+                          onClick={() => {
+                            navigate(`/vendor-rfqs/${encodeURIComponent(data.vendor_code)}`);
+                          }}
                         >
                           <VisibilityIcon />
                         </IconButton>
                       </Tooltip>
 
-                      {/* Re-initiate only show after approval and before 60 days of expiry date */}
-                      {(data.status_id === 11 &&
-                        (new Date(data.expiry_date) - new Date()) / (1000 * 60 * 60 * 24) <= 60) && (
-                        <Tooltip title="Re-initiate">
-                          <IconButton
-                            color="secondary"
-                            size="small"
-                            onClick={() => handleReinitiateClick(data)}
-                          > 
-                            <ReplayIcon />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {/* Edit */}
+                      {/* Re-initiate only show after approval and before 60 days of expiry date and after expired*/}
+                      {/* 11 --> approved and 15 --> expired */}
+                      {(data.status_id === 11 || data.status_id === 15) &&
+                        (new Date(data.expiry_date) - new Date()) / (1000 * 60 * 60 * 24) <= 60 && (
+                          <Tooltip title="Re-initiate">
+                            <IconButton
+                              color="secondary"
+                              size="small"
+                              onClick={() => handleReinitiateClick(data)}
+                            >
+                              <ReplayIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                      {/* Edit the status */}
                       <Tooltip title="Edit Status">
                         <IconButton
                           color="secondary"
@@ -310,6 +317,7 @@ const filteredVendors = Array.isArray(vendors)
                           <EditIcon />
                         </IconButton>
                       </Tooltip>
+
                     </td>
                   </tr>
                 ))
@@ -378,17 +386,19 @@ const filteredVendors = Array.isArray(vendors)
 
         <DialogActions>
           <Button
-            onClick={() => setOpenReinitiateModal(false)}>
+            onClick={() => setOpenReinitiateModal(false)}
+            disabled={isReinitiating}
+          >
             Cancel
           </Button>
 
           <Button
             variant="contained"
             color="primary"
-
+            disabled={isReinitiating}
             onClick={handleReinitiateSubmit}
           >
-            Submit
+            {isReinitiating ? "Processing..." : "Submit"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -465,7 +475,7 @@ const filteredVendors = Array.isArray(vendors)
 
 VendorListTable.propTypes = {
   Rfqs: PropTypes.array.isRequired,
-   vendors: PropTypes.array.isRequired,
+  vendors: PropTypes.array.isRequired,
   currentPage: PropTypes.number.isRequired,
   itemsPerPage: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired,

@@ -14,7 +14,7 @@ import { approveRfq, sendBackRfqForCorrections, rejectRfq, verifyRfq, submitRfq 
 
 import { getVmsUserRole } from "../../services/auth/userDetails";
 
-import { getPendingRfqList } from "../../services/vms/vendorService";
+import { getPendingSubmittedRfqList, getPendingVerifiedRfqList } from "../../services/vms/vendorService";
 
 import { getCountryCombo } from "../../services/admin/countryService";
 import { addDeclarations, getDeclarations, updateDeclarations } from "../../services/vms/declarationService";
@@ -52,7 +52,7 @@ const VmsRequest = () => {
     
     const [sameAsRegistered, setSameAsRegistered] = useState(false);
     const [countryCode, setCountryCode] = useState("");
-    const [pendingRfqs, setPendingRfps] = useState([]);
+    const [pendingRfqs, setPendingRfqs] = useState([]);
     const [selectedReferenceId, setSelectedReferenceId] = useState("");
 
 
@@ -78,15 +78,20 @@ const VmsRequest = () => {
         const fetchPendingRfqs = async () => {
             // if (!selectedReferenceId) return;
             try {
-                const response = await getPendingRfqList();
-                const rfqs = response?.data || [];
-                setPendingRfps(rfqs);
+                let response;
+                if (userRole === 6) {
+                    response = await getPendingSubmittedRfqList();
+                } else if (userRole === 7) {
+                    response = await getPendingVerifiedRfqList();
+                }
+                const rfqs = response?.data.rfqs || [];
+                setPendingRfqs(rfqs);
             } catch (error) {
                 console.error("Failed to fetch pending RFQs:", error);
             }
         };
         fetchPendingRfqs();
-    }, [selectedReferenceId]);
+    }, [userRole, selectedReferenceId]);
 
 
     const getCountries = async () => {
