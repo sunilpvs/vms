@@ -2613,7 +2613,13 @@ const VmsRequest = () => {
                 }
                 const response = await handleApproveRfq();
                 if (response === "approve success") {
-                    toast.success(`Vendor approved successfully till ${expiryDate}`);
+                    // format date to DD-MM-YYYY
+                    const formattedDate = new Date(expiryDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric"
+                    });
+                    toast.success(`Vendor approved successfully till ${formattedDate}`);
                     setSelectedReferenceId("");
                 } else if (response === "verify before approve") {
                     toast.error("Please verify the vendor before approving.");
