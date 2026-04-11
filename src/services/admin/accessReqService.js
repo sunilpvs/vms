@@ -8,9 +8,23 @@ export const sendAccessRequest = (payload) => {
     return axiosInstance.post(`api/admin/access-request`, payload);
 }
 
-export const getVMSAccessStatus = () => {
-    return axiosInstance.get(`auth/access-status.php?type=vms`);
-}
+
+export const getVMSAccessStatus = async () => {
+    try {
+        const res = await axiosInstance.get("auth/access-status.php?type=vms");
+
+        return { status: "granted" };
+
+    } catch (err) {
+        if (err.response?.status === 403) {
+            return {
+                status: err?.response?.data?.req_status?.toLowerCase() // already normalized
+            };
+        }
+
+        throw err;
+    }
+};
 
 export const getEmailFromToken = () => {
     return axiosInstance.get(`api/admin/access-request?type=email`);
