@@ -12,7 +12,6 @@ export const sendAccessRequest = (payload) => {
 export const getVMSAccessStatus = async () => {
     try {
         const res = await axiosInstance.get("auth/access-status.php?type=vms");
-
         const reqStatus = res.data?.req_status?.toString().toLowerCase();
         const message = res.data?.message?.toString().toLowerCase();
 

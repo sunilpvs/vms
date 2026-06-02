@@ -42,7 +42,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/access-rejected" replace />;
   }
 
-  if (status === "granted") {
+  if (status === "approved" || status === "granted") {
     return children;
   }
 
